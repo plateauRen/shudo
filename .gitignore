@@ -1,0 +1,32 @@
+.env
+.env.*
+!.env.example
+hermes-robot.env
+wukongim/
+tsdd/
+miniodata/
+mysqldata/
+*.log
+.DS_Store
+
+# APNs secrets
+tsdd/configs/push/*.p12
+tsdd/configs/push/*.pem
+
+# iOS
+ios/DerivedData/
+ios/Pods/
+**/Pods/
+ios/**/*.xcuserstate
+ios/**/xcuserdata/
+.nested-git-bak/
+
+# desktop (TangSengDaoDaoWeb)
+desktop/node_modules/
+desktop/.turbo/
+desktop/apps/web/build/
+desktop/apps/web/node_modules/
+desktop/packages/*/node_modules/
+desktop/packages/*/lib/
+desktop/out-election/
+desktop/dist-ele/

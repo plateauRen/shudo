@@ -1,0 +1,304 @@
+.wk-rich-editor {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  background: var(--wk-color-item, #fff);
+  color: var(--wk-text-item, #111);
+}
+
+.wk-rich-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+}
+
+body[theme-mode="dark"] .wk-rich-toolbar {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.wk-rich-tb-btn {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: inherit;
+}
+
+.wk-rich-tb-btn.active {
+  background: rgba(52, 120, 246, 0.15);
+  border-color: var(--wk-color-theme, #FF4500);
+  color: var(--wk-color-theme, #FF4500);
+}
+
+.wk-rich-tb-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.wk-rich-tb-sep {
+  width: 1px;
+  height: 18px;
+  background: rgba(0, 0, 0, 0.12);
+  margin: 0 4px;
+}
+
+.wk-rich-tb-select {
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+}
+
+.wk-rich-tb-color {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.wk-rich-editor-main {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.wk-rich-editor-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 14px;
+}
+
+.wk-rich-table-bubble {
+  position: absolute;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  max-width: calc(100% - 16px);
+}
+
+.wk-rich-table-toggle {
+  min-width: 40px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 14px;
+  background: var(--wk-color-item, #fff);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--wk-color-theme, #FF4500);
+}
+
+body[theme-mode="dark"] .wk-rich-table-toggle {
+  background: #2a2a2a;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.wk-rich-table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  background: var(--wk-color-item, #fff);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+body[theme-mode="dark"] .wk-rich-table-actions {
+  background: #2a2a2a;
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.wk-rich-table-actions button {
+  min-width: 30px;
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: inherit;
+}
+
+.wk-rich-table-actions button.danger {
+  color: #d4380d;
+  border-color: rgba(212, 56, 13, 0.35);
+}
+
+.wk-rich-table-actions .wk-rich-tb-sep {
+  width: 1px;
+  height: 16px;
+  background: rgba(0, 0, 0, 0.12);
+  margin: 0 2px;
+}
+
+.wk-rich-editor-body .ProseMirror {
+  outline: none;
+  min-height: 180px;
+  line-height: 1.55;
+  font-size: 15px;
+}
+
+.wk-rich-editor-body .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #999;
+  pointer-events: none;
+  height: 0;
+}
+
+.wk-rich-editor-body .ProseMirror a {
+  color: var(--wk-color-theme, #FF4500);
+  text-decoration: underline;
+}
+
+.wk-rich-editor-body .ProseMirror pre,
+.wk-rich-codeblock {
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  overflow-x: auto;
+}
+
+body[theme-mode="dark"] .wk-rich-editor-body .ProseMirror pre {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.wk-rich-editor-body .ProseMirror table,
+.wk-rich-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 6px 0 10px;
+  table-layout: fixed;
+}
+
+.wk-rich-editor-body .ProseMirror th,
+.wk-rich-editor-body .ProseMirror td {
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  padding: 1px 6px;
+  min-width: 36px;
+  min-height: 0;
+  vertical-align: middle;
+  line-height: 1.25;
+  font-size: 14px;
+}
+
+.wk-rich-editor-body .ProseMirror th > p,
+.wk-rich-editor-body .ProseMirror td > p {
+  margin: 0;
+  line-height: 1.25;
+}
+
+.wk-rich-editor-body .ProseMirror th > p + p,
+.wk-rich-editor-body .ProseMirror td > p + p {
+  margin-top: 2px;
+}
+
+body[theme-mode="dark"] .wk-rich-editor-body .ProseMirror th,
+body[theme-mode="dark"] .wk-rich-editor-body .ProseMirror td {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.wk-rich-editor-body .ProseMirror th {
+  background: rgba(0, 0, 0, 0.04);
+  font-weight: 600;
+}
+
+.wk-rich-composer-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  background: var(--wk-color-secondary, #f5f5f5);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+body[theme-mode="dark"] .wk-rich-composer-panel {
+  background: var(--wk-color-secondary, #1e1e1e);
+}
+
+.wk-rich-composer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--wk-color-item, #fff);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+}
+
+body[theme-mode="dark"] .wk-rich-composer-head {
+  background: var(--wk-color-secondary, #252525);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.wk-rich-composer-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.wk-rich-composer-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.wk-rich-composer-btn {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  color: inherit;
+}
+
+.wk-rich-composer-btn.primary {
+  background: var(--wk-color-theme, #FF4500);
+  border-color: var(--wk-color-theme, #FF4500);
+  color: #fff;
+}
+
+.wk-rich-composer-body {
+  flex: 1;
+  min-height: 0;
+  margin: 10px 12px 12px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--wk-color-item, #fff);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+body[theme-mode="dark"] .wk-rich-composer-body {
+  background: #2a2a2a;
+  border-color: rgba(255, 255, 255, 0.08);
+}
