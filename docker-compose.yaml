@@ -1,0 +1,151 @@
+# TangSengDaoDao (业务层) + WuKongIM (通讯层)
+# Docs: https://tsdaodao.com/dev/backend/deploy-compose.html
+services:
+  wukongim:
+    image: registry.cn-shanghai.aliyuncs.com/wukongim/wukongim:v2
+    platform: linux/amd64
+    restart: always
+    ports:
+      - "5100:5100"
+      - "5200:5200"
+      - "5300:5300"
+    volumes:
+      - ./wukongim:/root/wukongim
+    env_file:
+      - .env
+    environment:
+      - WK_EXTERNAL_IP=${EXTERNAL_IP}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-Y", "off", "-O", "/dev/null", "http://127.0.0.1:5001/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+
+  tangsengdaodaoserver:
+    image: registry.cn-shanghai.aliyuncs.com/wukongim/tangsengdaodaoserver:v1.5
+    platform: linux/amd64
+    restart: always
+    command: "api"
+    healthcheck:
+      test: "wget -q -Y off -O /dev/null http://localhost:8090/v1/ping > /dev/null 2>&1"
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
+    depends_on:
+      redis:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      wukongim:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./tsdd:/home/tsdddata
+      - ./tsdd/configs:/home/configs
+    env_file:
+      - .env
+    environment:
+      - TS_DB_MYSQLADDR=root:${MYSQL_ROOT_PASSWORD}@tcp(mysql)/${MYSQL_DATABASE}?charset=utf8mb4&parseTime=true&loc=Local
+      - TS_EXTERNAL_IP=${EXTERNAL_IP}
+      - TS_FILESERVICE=${TS_FILESERVICE}
+      - TS_MINIO_ACCESSKEYID=${MINIO_ROOT_USER}
+      - TS_MINIO_SECRETACCESSKEY=${MINIO_ROOT_PASSWORD}
+
+  # Message translation API for Shudo clients (POST /v1/common/translate)
+  translate:
+    build: ./services/translate
+    platform: linux/amd64
+    restart: always
+    ports:
+      - "8091:8091"
+    environment:
+      - TRANSLATE_PROVIDER=${TRANSLATE_PROVIDER:-google}
+      - DEEPL_API_KEY=${DEEPL_API_KEY:-}
+      - LIBRETRANSLATE_URL=${LIBRETRANSLATE_URL:-}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8091/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 20s
+
+  tangsengdaodaoweb:
+    image: registry.cn-shanghai.aliyuncs.com/wukongim/tangsengdaodaoweb:latest
+    platform: linux/amd64
+    restart: always
+    environment:
+      - API_URL=http://tangsengdaodaoserver:8090/
+    ports:
+      - "82:80"
+    depends_on:
+      tangsengdaodaoserver:
+        condition: service_healthy
+
+  tangsengdaodaomanager:
+    image: registry.cn-shanghai.aliyuncs.com/wukongim/tangsengdaodaomanager:latest
+    platform: linux/amd64
+    restart: always
+    environment:
+      - API_URL=http://tangsengdaodaoserver:8090/
+    ports:
+      - "83:80"
+    depends_on:
+      tangsengdaodaoserver:
+        condition: service_healthy
+
+  minio:
+    image: registry.cn-shanghai.aliyuncs.com/wukongim/minio:RELEASE.2023-07-18T17-49-40Z
+    platform: linux/amd64
+    expose:
+      - "9000"
+      - "9001"
+    command: "server /data --console-address ':9001'"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    volumes:
+      - ./miniodata:/data
+
+  mysql:
+    image: registry.cn-shanghai.aliyuncs.com/wukongim/mysql:8.0.33
+    platform: linux/amd64
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+    volumes:
+      - ./mysqldata:/var/lib/mysql
+    environment:
+      - TZ=Asia/Shanghai
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+
+  redis:
+    image: registry.cn-shanghai.aliyuncs.com/wukongim/redis:7.2.3
+    platform: linux/amd64
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+  adminer:
+    image: registry.cn-shanghai.aliyuncs.com/wukongim/adminer:latest
+    platform: linux/amd64
+    ports:
+      - "8306:8080"
+    profiles:
+      - debug
