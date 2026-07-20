@@ -1,0 +1,137 @@
+# Uncomment the next line to define a global platform for your project
+ platform :ios, '12.0'
+workspace 'TangSengDaoDaoiOS.xcworkspace'
+
+post_install do |installer|
+    # 填写你自己的开发者团队的team id
+    dev_team = "62XM24LQ3C"
+    project = installer.aggregate_targets[0].user_project
+    project.targets.each do |target|
+        target.build_configurations.each do |config|
+            if dev_team.empty? and !config.build_settings['DEVELOPMENT_TEAM'].nil?
+                dev_team = config.build_settings['DEVELOPMENT_TEAM']
+            end
+        end
+    end
+    
+    # Fix bundle targets' 'Signing Certificate' to 'Sign to Run Locally'
+    installer.pods_project.targets.each do |target|
+        target.build_configurations.each do |config|
+            if target.respond_to?(:product_type) and target.product_type == "com.apple.product-type.bundle"
+              config.build_settings['DEVELOPMENT_TEAM'] = dev_team
+            end
+            config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+            config.build_settings['ENABLE_BITCODE'] = 'NO'
+            # Apple Silicon：不要排除模拟器 arm64
+            config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = ''
+            config.build_settings.delete('EXCLUDED_ARCHS')
+            config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+        end
+    end
+
+    # AFNetworking + Xcode 26：去掉私有头 netinet6/in6.h
+    af_reach = File.join(installer.sandbox.root, 'AFNetworking/AFNetworking/AFNetworkReachabilityManager.m')
+    if File.exist?(af_reach)
+      af = File.read(af_reach)
+      af2 = af.gsub(/#import <netinet6\/in6\.h>\n/, '')
+      File.write(af_reach, af2) if af != af2
+    end
+
+    # 清理 CocoaPods 生成的 xcconfig 里残留的 arm64 排除（来自部分 podspec）
+    Dir.glob(File.join(installer.sandbox.root, 'Target Support Files', '**', '*.xcconfig')).each do |xcconfig|
+      content = File.read(xcconfig)
+      cleaned = content.gsub(/EXCLUDED_ARCHS\[sdk=iphonesimulator\*\]\s*=\s*arm64\n?/, '')
+      File.write(xcconfig, cleaned) if cleaned != content
+    end
+
+    # AMR / Bugly 真机库不可用于 Apple Silicon 模拟器
+    Dir.glob(File.join(installer.sandbox.root, 'Target Support Files', '**', '*.xcconfig')).each do |xcconfig|
+      content = File.read(xcconfig)
+      next unless content.include?('opencore-amr') || content.include?('vo-amrwbenc') || content.include?('arm/lib') || content.include?('Bugly')
+      cleaned = content
+        .gsub(/-l"opencore-amrnb"[ \t]*/, '')
+        .gsub(/-l"opencore-amrwb"[ \t]*/, '')
+        .gsub(/-l"vo-amrwbenc"[ \t]*/, '')
+        .gsub(/-framework "Bugly"[ \t]*/, '')
+      # 把含 arm/lib 的通用 LIBRARY_SEARCH_PATHS 改成仅真机
+      cleaned = cleaned.lines.map { |line|
+        if line.start_with?('LIBRARY_SEARCH_PATHS =') && line.include?('arm/lib')
+          amr_path = '"${PODS_ROOT}/../Modules/WuKongIMiOSSDK/WuKongIMSDK/Classes/private/arm/lib"'
+          rest = line.sub(/^LIBRARY_SEARCH_PATHS = /, '').strip
+            .gsub(/\s*"\$\{PODS_ROOT\}\/\.\.\/Modules\/WuKongIMiOSSDK\/WuKongIMSDK\/Classes\/private\/arm\/lib"/, '')
+            .gsub(/\s*"\$\{PODS_TARGET_SRCROOT\}\/WuKongIMSDK\/Classes\/private\/arm\/lib"/, '')
+          [
+            "LIBRARY_SEARCH_PATHS = #{rest}\n",
+            "LIBRARY_SEARCH_PATHS[sdk=iphoneos*] = $(inherited) #{amr_path}\n"
+          ].join
+        elsif line.start_with?('FRAMEWORK_SEARCH_PATHS =') && line.include?('Bugly')
+          # 去掉通用路径里对 Bugly 目录的依赖（由 podspec 的 sdk=iphoneos* 处理）
+          line
+        else
+          line
+        end
+      }.join
+      # 仅当本文件原本含 AMR 链接时，才补回真机专用 OTHER_LDFLAGS
+      if content.match?(/-l"opencore-amrnb"|-lopencore-amrnb/) && !cleaned.include?('-l"opencore-amrnb"') && !cleaned.include?('-lopencore-amrnb')
+        cleaned += "\nOTHER_LDFLAGS[sdk=iphoneos*] = $(inherited) -l\"opencore-amrnb\" -l\"opencore-amrwb\" -l\"vo-amrwbenc\"\n"
+      end
+      File.write(xcconfig, cleaned) if cleaned != content
+    end
+
+    # YYImage/WebP 自带的 Vendor/WebP.framework 只有真机切片，模拟器改用 CocoaPods libwebp
+    libwebp_target = installer.pods_project.targets.find { |t| t.name == 'libwebp' }
+    installer.pods_project.targets.each do |target|
+      next unless target.name == 'YYImage'
+      target.add_dependency(libwebp_target) if libwebp_target
+    end
+    Dir.glob(File.join(installer.sandbox.root, 'Target Support Files', 'YYImage', '*.xcconfig')).each do |xcconfig|
+      content = File.read(xcconfig)
+      content = content.gsub(/FRAMEWORK_SEARCH_PATHS = \$\(inherited\) "\$\{PODS_ROOT\}\/YYImage\/Vendor"/,
+                            'FRAMEWORK_SEARCH_PATHS = $(inherited) "${PODS_CONFIGURATION_BUILD_DIR}/libwebp"')
+      content = content.gsub(/-framework "WebP"/, '-framework "libwebp"')
+      unless content.include?('libwebp/src')
+        content += "\nHEADER_SEARCH_PATHS = $(inherited) \"${PODS_ROOT}/libwebp/src\"\n"
+      end
+      File.write(xcconfig, content)
+    end
+
+    # 部署版本与 Xcode 26 对齐
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+      end
+    end
+end
+
+
+abstract_target 'TangSengDaoDaoiOSBase' do
+  
+#  pod 'lottie-ios', '~> 2.5.3'
+  pod 'Socket.IO-Client-Swift'
+  pod 'SSZipArchive', '~> 2.2.3'
+  pod 'SocketRocket'
+  pod 'Aspects'
+  pod 'ReactiveObjC'
+
+  target 'TangSengDaoDaoiOS' do
+    project 'TangSengDaoDaoiOS.xcodeproj'
+    
+  use_frameworks!
+  pod 'YBImageBrowser/NOSD', :git=>'https://github.com/tangtaoit/YBImageBrowser.git'
+  pod 'YYImage/WebP', :git => 'https://github.com/tangtaoit/YYImage.git'
+  pod 'AsyncDisplayKit', :git => 'https://github.com/tangtaoit/AsyncDisplayKit.git'
+  pod 'librlottie', :git => 'https://github.com/tangtaoit/librlottie.git'
+  
+  pod 'WuKongIMSDK',  :path => './Modules/WuKongIMiOSSDK'   ## WuKongBase 基础工具包  源码地址 https://github.com/WuKongIM/WuKongIMiOSSDK
+#  pod 'WuKongIMSDK',  :path => '../../../wukongIM/iOS/WuKongIMiOSSDK'
+#  pod  'WuKongIMSDK', '~> 1.0.2' ## 源码地址 https://github.com/WuKongIM/WuKongIMiOSSDK
+  pod 'WuKongBase',  :path => './Modules/WuKongBase'   ## WuKongBase 基础工具包
+  pod 'WuKongLogin', :path => './Modules/WuKongLogin'  ##  登录模块
+  pod 'WuKongContacts', :path => './Modules/WuKongContacts'  ## 联系人模块
+  pod 'WuKongDataSource', :path => './Modules/WuKongDataSource'  ## 数据源
+
+  end
+  
+end
+
+

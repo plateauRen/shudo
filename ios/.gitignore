@@ -1,0 +1,9 @@
+# Local signing / secrets
+*.p12
+*.pem
+*.cer
+*.mobileprovision
+xcuserdata/
+*.xcuserstate
+TangSengDaoDaoiOS.xcodeproj/project.pbxproj.bak
+DerivedData/
