@@ -1,0 +1,164 @@
+
+
+ :root {
+    --wk-color-theme: #FF4500;
+    --wk-color-secondary: #F5F6F7;
+    --wk-color-secondary-2: #F5F6F7;
+    --wk-color-hover: #EFF0F1;
+    /* 提示类型的字体颜色 */
+    --wk-color-font-tip: #8F959E;
+    --wk-width-layout-content-left: 300px;
+    --wk-wdith-conversation-list: var(--wk-width-layout-content-left);
+    /* --wk-height-chat-search: 65px; */
+    --wk-height-chat-search: 64px;
+    --wk-height-chat-conversation-header: 64px;
+    --wk-wdith-chat-channelsetting: 340px;
+    --wk-layer-transition: 300ms cubic-bezier(0.33,1,0.68,1);
+    --wk-slide-transition: 450ms cubic-bezier(0.25, 1, 0.5, 1);
+
+    --wk-line: 1px solid #E5E6EB;
+    --wk-line-color:  #E5E6EB;
+
+    --wk-color-item: #FFFFFF;
+    --wk-text-item:  #1F2329;
+
+    --wk-message-item: #FFFFFF;
+    --wk-message-color: #1F2329;
+    /* Feishu pale send bubble — low saturation, easy on eyes */
+    --wk-color-message-send: #D6E4FF;
+    --wk-color-message-send-text: #1F2329;
+  }
+
+  *, *:before, *:after {
+    box-sizing: inherit;
+  }
+
+  body[theme-mode=dark] {
+    --wk-color-theme: #FF6B35;
+    --wk-color-secondary: #17181A;
+    --wk-color-secondary-2: #1F2329;
+    --wk-color-hover: #2B2F36;
+    --wk-color-font-tip: #8F959E;
+    --wk-line: 1px solid #2B2F36;
+    --wk-line-color: #2B2F36;
+    --wk-color-item: #1F2329;
+    --wk-text-item: #C9CDD4;
+    color: #C9CDD4 !important;
+
+    --wk-message-item: #1F2329;
+    --wk-message-color: #C9CDD4;
+    --wk-color-message-send: #2B3A55;
+    --wk-color-message-send-text: #C9CDD4;
+
+    --semi-color-primary: #FF6B35;
+    --semi-color-primary-hover: rgba(78, 131, 253, 0.55);
+
+  }
+
+  /* ::-webkit-scrollbar-thumb:window-inactive {
+    background:rgba(255,0,0,0.4);
+  } */
+
+html {
+    height: 100%;
+    box-sizing: border-box;
+}
+  
+  body {
+    height: 100%;
+    margin: 0;
+    margin: 0;
+    /* font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif; */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Fira Sans,Droid Sans,Cantarell,sans-serif; */
+    font-family: "Roboto",-apple-system,BlinkMacSystemFont,"Apple Color Emoji","Helvetica Neue",sans-serif;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    background: var( --background-color);
+    color: #1F2329 ;
+
+    --semi-color-primary: #FF4500;
+  }
+
+  div {
+    outline:none; /** 让div没有焦点边框 不加这个 第一次打开Modal会聚焦**/
+  }
+  
+  #root {
+    height: 100%;
+  }
+  
+  code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  }
+  
+  
+  .page {
+    width: 100%;
+    height: 100%;
+    background-color: #F5F6F7;
+  }
+  
+  .pageContent {
+    padding: 0px 40px;
+    overflow-y: auto;
+  }
+  
+    .pageContent.space {
+        padding-top: 40px;
+        width: 100%;
+        height: 100%;
+    }
+  
+  @font-face {
+    font-family: "icomoon";
+    src: url("./assets/fonts/icomoon.woff2");
+  }
+  
+  [class^=icon-], [class*=" icon-"] {
+    font-family: "icomoon" !important;
+    speak: none;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  
+  
+  ul {
+      list-style-type: none;
+      margin-block-start: 0px;
+      margin-block-end: 0px;
+      margin-inline-start: 0px;
+      margin-inline-end: 0px;
+      padding-inline-start: 0px;
+  }
+  
+
+
+  .wk-loading {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 15px 0px;
+  }
+
+  .wk-text-oneline {
+    display: inline-block;
+    white-space: nowrap;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  body[theme-mode=dark] .semi-badge-count {
+    color: white;
+  }
