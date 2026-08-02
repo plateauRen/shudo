@@ -1,87 +1,113 @@
-# 叙叨 + 悟空 IM（本地部署）
+# 叙叨 (Shudo) — 私有化即时通讯平台
 
-官方 Compose 栈：WuKongIM（通讯）+ TangSengDaoDao（业务/Web/管理端）+ MySQL/Redis/MinIO。
+**叙叨** 是基于开源 IM 生态的私有化即时通讯平台，支持 iOS / Web / 桌面端，集成 AI 助手 Hermes。
 
-> Apple Silicon：镜像为 `linux/amd64`，Docker Desktop 会模拟运行。
+## 📦 项目组成
 
-## 启动
+```
+shudo/
+├── desktop/          # Web / 桌面客户端（React + Electron）
+├── ios/              # iOS 客户端（Objective-C）
+├── services/         # 自研后端服务
+│   ├── shudo-org/    #   话题（子频道）分组管理
+│   └── translate/    #   消息翻译 API
+├── docker-compose.yaml  # 完整服务栈
+└── docs/             # 文档
+```
+
+## 🏗️ 基于的开源项目
+
+| 组件 | 上游项目 | 说明 |
+|------|---------|------|
+| **通讯层** | [WuKongIM](https://github.com/WuKongIM/WuKongIM) v2 | 悟空 IM 服务端 |
+| **业务层** | [TangSengDaoDao](https://github.com/TangSengDaoDao/TangSengDaoDao) v1.5 | 唐僧叨叨服务端 |
+| **Web 端** | [TangSengDaoDaoWeb](https://github.com/TangSengDaoDao/TangSengDaoDaoWeb) | 唐僧叨叨 Web 客户端 |
+| **iOS 端** | WuKongBase (TangSengDaoDao iOS) | 唐僧叨叨 iOS 客户端 |
+
+## ✨ 叙叨自研改动
+
+### 🔧 后端服务（services/）
+
+| 服务 | 功能 | 技术栈 |
+|------|------|--------|
+| **shudo-org** | 话题（子频道）创建/管理/分组 | Python FastAPI + MySQL |
+| **translate** | 多引擎消息翻译（Google/DeepL/LibreTranslate） | Python FastAPI |
+
+### 🖥️ Web / 桌面端改动
+
+| 改动 | 说明 |
+|------|------|
+| **Hermes AI 集成** | 卡片消息(21000)、按钮回传(21001)、表格(21002)、音频播报(21003) |
+| **输入框飞书风格重设计** | 圆角外壳 + 发送按钮 + iOS 风格工具栏图标 |
+| **@mention 裁切修复** | 修复高亮层裁切导致 @人名只显示首字符的 Bug |
+| **音频消息卡片** | 播放/暂停按钮 + 实时进度条 + 顶栏播放器 |
+| **话题（子频道）** | 创建话题、管理话题、话题分组 |
+| **品牌主题** | 石青/玄青/松烟/雾蓝 四套主题色 |
+| **消息翻译** | 侧栏设置 + 长按翻译 + 气泡译文展示 |
+| **斜杠指令** | `/` 触发 AI 指令面板 |
+| **@bot inline** | @机器人触发内联 GIF 搜索 |
+
+### 📱 iOS 端改动
+
+| 改动 | 说明 |
+|------|------|
+| **品牌定制** | 应用名「叙叨」、Logo、启动图、主题色 |
+| **Hermes 集成** | 与 Web 端对齐的卡片/表格/音频消息渲染 |
+| **话题管理** | 子频道列表、创建、归档、删除 |
+| **毛玻璃 Chrome** | Liquid Glass 输入框底栏效果 |
+| **M80 富文本增强** | 修复 @提及解析、行高计算 |
+
+---
+
+## 🚀 快速启动
 
 ```bash
-cd ~/Projects/tsdd
+# 1. 配置环境变量
+cp .env.example .env
+# 编辑 .env：设置 EXTERNAL_IP 为你的服务器 IP
+
+# 2. 启动后端服务栈
 docker compose up -d
-docker compose ps
+
+# 3. Web 开发
+cd desktop
+yarn install
+yarn dev               # → http://localhost:3000
+
+# 4. iOS 开发
+open ios/TangSengDaoDaoiOS.xcworkspace
+# Xcode → 选择 WuKongChatiOS scheme → Run
 ```
+
+### 服务端口
 
 | 服务 | 地址 |
 |------|------|
-| Web 客户端 | http://192.168.5.249:82 或 http://127.0.0.1:82 |
-| 管理后台 | http://127.0.0.1:83 （`superAdmin` / `.env` 的 `TS_ADMINPWD`） |
-| API | http://127.0.0.1:8090/v1/ping |
-| 悟空监控 | http://127.0.0.1:5300 |
+| Web 客户端 | `http://localhost:82` |
+| 管理后台 | `http://localhost:83` |
+| API | `http://localhost:8090` |
+| WuKongIM 监控 | `http://localhost:5300` |
 
-## 账号怎么来（重要）
+### 创建账号
 
-当前 Web 客户端 **没有注册入口**（官方「长按标题注册」只在手机 App）。本机配置正常，可用下面方式建号：
+Web 客户端无注册入口，通过管理后台添加：
+1. 打开 `http://localhost:83`
+2. 账号 `superAdmin`，密码见 `.env`
+3. 用户管理 → 添加用户
 
-### A. 管理后台加用户（推荐）
-1. 打开 http://127.0.0.1:83 （不是 82）
-2. 账号 `superAdmin`，密码见 `.env` 的 `TS_ADMINPWD`
-3. 用户管理 → 添加用户（手机号 + 密码）
-4. 回到 http://127.0.0.1:82 ，用该手机号登录
-
-### B. API 注册（开发用）
+或通过 API：
 ```bash
-curl -X POST http://127.0.0.1:8090/v1/user/register \
+curl -X POST http://localhost:8090/v1/user/register \
   -H 'Content-Type: application/json' \
-  -d '{"zone":"0086","phone":"13800138001","code":"123456","password":"a1234567"}'
-```
-验证码固定为 `.env` 的 `TS_SMSCODE`（默认 `123456`）。
-
-### C. 私有化桌面 / Web（本仓库 `desktop/`）
-
-官方 Web/PC 源码已放入 `desktop/`，并接入与 iOS 相同的 Hermes `21000/21001` 协议。见 `desktop/README.md`。
-
-```bash
-export PATH="$HOME/.hermes/node/bin:$PATH"   # 若本机 yarn 在此
-cd ~/Projects/tsdd/desktop
-yarn install --ignore-optional
-yarn dev
+  -d '{"zone":"0086","phone":"你的手机号","code":"123456","password":"你的密码"}'
 ```
 
-默认 API：`http://127.0.0.1:8090/v1/`（可用 `REACT_APP_API_URL` 覆盖）。
+详见各子目录的 README。
 
-### D. 私有化 iOS（本仓库 `ios/`）
+## 📄 许可证
 
-官方 App Store 包**没有**改服务器入口，请用本仓库自编译客户端：
+本项目基于上游开源项目修改，各组件遵循其原始许可证。自研部分（`services/`）采用 MIT License。
 
-1. 安装完整 **Xcode**（见 `ios/README.md`）
-2. 打开 `ios/TangSengDaoDaoiOS.xcworkspace`，Team 选你的开发者账号，真机运行
-3. 登录页右上角齿轮 → 服务器 `192.168.5.249` / 端口 `8090` / `http`
-4. APNs 离线推送：证书放到 `tsdd/configs/push/`，配置见该目录 README
-
-默认 Bundle ID：`com.platoren.tsdd`。
-
-## 配置
-
-必改：`.env` 的 `EXTERNAL_IP`（局域网访问用；当前 `192.168.5.249`）。
-
-## Hermes 机器人（已接通）
-
-- 机器人用户：手机号 `13800000001`，显示名 Hermes  
-- 凭证：`hermes-robot.env`（勿提交）  
-- Hermes 插件：`~/.hermes/hermes-agent/plugins/platforms/tsdd/`  
-- 在 Web 里打开与 **Hermes** 的私聊发消息即可（已与你的账号互加好友）
-
-若收不到：确认 Docker 栈在跑，并检查 Hermes 日志里是否有 `✓ tsdd connected`。
-
-注意：不要用 `launchctl submit -l com.hermes.gwrestart ... KeepAlive` 之类的方式循环重启 Gateway（之前有过这种残留任务会把服务打崩）。正常重启用外部终端执行一次 `hermes gateway restart` 即可。
-
-## 停止
-
-```bash
-docker compose down
-```
-
-数据目录：`mysqldata/`、`miniodata/`、`wukongim/`、`tsdd/`。
+---
 
 > 🤖 **AI 辅助开发**：本项目代码编写、调试、UI 设计大量借助 AI 编程助手 [Hermes Agent](https://nousresearch.com) 完成。
