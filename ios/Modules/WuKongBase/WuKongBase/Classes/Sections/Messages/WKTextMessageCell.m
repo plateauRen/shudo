@@ -423,13 +423,14 @@
 
     if(model.isSend) {
         attrStr.textColor =  [WKApp shared].config.messageSendTextColor;
-        attrStr.linkColor = [UIColor whiteColor];
+        attrStr.linkColor = [WKApp shared].config.themeColor ?: [UIColor systemBlueColor];
     }else {
         attrStr.textColor = [WKApp shared].config.messageRecvTextColor;
-        attrStr.linkColor = [UIColor blueColor];
+        attrStr.linkColor = [WKApp shared].config.themeColor ?: [UIColor systemBlueColor];
     }
-    attrStr.metionColor = attrStr.textColor;
-    attrStr.metionUnderline = true;
+    // @人名用主题色标注，与正文区分（勿跟正文同色）
+    attrStr.metionColor = [WKApp shared].config.themeColor ?: [UIColor systemBlueColor];
+    attrStr.metionUnderline = NO;
 
     self.textLbl.attributedText = attrStr;
     self.textLbl.tokens = attrStr.tokens;

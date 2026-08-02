@@ -1,6 +1,6 @@
 
 :root {
-    --wk-conversation-footer: 120px;
+    --wk-conversation-footer: 115px;
     --wk-height-conversation-replyview: 50px;
 }
 
@@ -20,11 +20,15 @@
     width: 100%;
     height: calc(100% - var(--wk-conversation-footer));
     position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background-color: var(--wk-surface-sunken);
     transition: height 150ms ease-out,opacity 150ms ease-out;
 }
 
 body[theme-mode=dark] .wk-conversation-content {
-    background-color: var(--wk-color-secondary-2);
+    background-color: var(--wk-surface-sunken);
 }
 
 .wk-conversation-hasreply .wk-conversation-content {
@@ -34,7 +38,8 @@ body[theme-mode=dark] .wk-conversation-content {
 
 .wk-conversation-messages {
     width: 100%;
-    height: 100%;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
 }
 
@@ -42,12 +47,11 @@ body[theme-mode=dark] .wk-conversation-content {
     width: 100%;
     display: flex;
     position: relative;
-    
+    padding: 2px 0;
 }
 
-
 .wk-message-item-last {
-    margin-bottom: 15px;
+    margin-bottom: var(--wk-space-4);
 }
 
 .wk-conversation-dragover .wk-message-item {
@@ -58,10 +62,12 @@ body[theme-mode=dark] .wk-conversation-content {
     width: 100%;
     height: var(--wk-conversation-footer);
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     flex-direction: column;
     position: absolute;
     bottom: 0px;
+    padding-bottom: 10px;
+    box-sizing: border-box;
 }
 
 
@@ -155,17 +161,18 @@ body[theme-mode=dark] .wk-conversation-content {
 .wk-conversation-topview {
     transform: translate3d(0, 100%, 0);
     transition: transform var(--wk-layer-transition);
-    background-color: white;
+    background-color: var(--wk-surface-raised);
 }
 
 body[theme-mode=dark] .wk-conversation-topview {
-    background-color: var(--wk-color-secondary);
+    background-color: var(--wk-surface-raised);
 }
 
 .wk-conversation-hasreply .wk-conversation-topview {
     transform: translate3d(0,  0, 0);
     height: var(--wk-height-conversation-replyview);
-    box-shadow: 0.3rem -0.2rem 0.8rem 0.05rem rgb(114 114 114 / 5%);
+    box-shadow: none;
+    border-top: 1px solid var(--wk-border-subtle);
     border-left: none;
 }
 

@@ -2,27 +2,43 @@ import { Extension, Editor } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { sanitizeHtml } from "./sanitize";
 
+/**
+ * Index of the first real table line. Copied Hermes tables often prefix a
+ * title/caption (no tabs) before the TSV header — skip those so detection works.
+ */
+function tableBodyStart(lines: string[]): number {
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].includes("\t") && lines[i].split("\t").length >= 2) {
+      return i;
+    }
+  }
+  for (let i = 0; i < lines.length; i++) {
+    if (/\|.+\|/.test(lines[i])) return i;
+  }
+  return -1;
+}
+
 /** Tab / multi-line plain text that looks like a spreadsheet paste. */
 export function looksLikeTsvTable(text: string): boolean {
   if (!text) return false;
   const normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-  if (normalized.includes("\t")) {
-    const lines = normalized.split("\n").filter((l) => l.length > 0);
-    if (lines.length < 1) return false;
-    const cols = lines[0].split("\t").length;
+  const lines = normalized.split("\n").filter((l) => l.length > 0);
+  const start = tableBodyStart(lines);
+  if (start < 0) return false;
+  const tableLines = lines.slice(start);
+
+  if (tableLines[0].includes("\t")) {
+    const cols = tableLines[0].split("\t").length;
     if (cols < 2) return false;
     let ok = 0;
-    for (const line of lines) {
+    for (const line of tableLines) {
       if (Math.abs(line.split("\t").length - cols) <= 1) ok++;
     }
-    return ok >= Math.max(1, Math.ceil(lines.length * 0.5));
+    return ok >= Math.max(1, Math.ceil(tableLines.length * 0.5));
   }
   // Markdown pipe table
-  if (/\|.+\|/.test(normalized) && normalized.split("\n").length >= 2) {
-    const lines = normalized.split("\n").filter((l) => /\|/.test(l));
-    return lines.length >= 2;
-  }
-  return false;
+  const pipeLines = tableLines.filter((l) => /\|/.test(l));
+  return pipeLines.length >= 2;
 }
 
 function escapeHtml(s: string) {
@@ -33,11 +49,14 @@ function escapeHtml(s: string) {
 }
 
 export function tsvToHtmlTable(text: string): string {
-  const lines = text
+  const allLines = text
     .replace(/\r\n/g, "\n")
     .replace(/\r/g, "\n")
     .split("\n")
     .filter((l) => l.length > 0);
+  const start = tableBodyStart(allLines);
+  if (start < 0) return "";
+  const lines = allLines.slice(start);
   if (!lines.length) return "";
 
   let rows: string[][];
@@ -179,9 +198,17 @@ export function handleTableCopy(
         if (dom instanceof HTMLElement) {
           tableHtml = sanitizeHtml(dom.outerHTML);
         } else {
-          // Fallback: slice JSON → HTML via temporary insert
-          const slice = node.type.schema.nodeFromJSON(node.toJSON());
-          void slice;
+          // Build a minimal HTML table from the ProseMirror node text
+          const rows: string[] = [];
+          node.forEach((row) => {
+            if (row.type.name !== "tableRow") return;
+            const cells: string[] = [];
+            row.forEach((cell) => {
+              cells.push(`<td>${cell.textContent || ""}</td>`);
+            });
+            rows.push(`<tr>${cells.join("")}</tr>`);
+          });
+          tableHtml = sanitizeHtml(`<table>${rows.join("")}</table>`);
         }
         break;
       }

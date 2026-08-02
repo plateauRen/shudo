@@ -102,6 +102,8 @@
 #endif
 #import "WKMyInviteCodeVC.h"
 #import "WKProhibitwordsService.h"
+#import "WKShudoOrgManager.h"
+#import "WKMessageLongMenusItem.h"
 
 @import FPSCounter.Swift;
 //#import <PINRemoteImage/PINImageView+PINRemoteImage.h>
@@ -306,10 +308,8 @@ static WKApp *_instance;
     }
     
     [WKKeyboardService.shared setup];
-    // Prewarm TipTap rich editor so first open is not cold-start slow.
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [[WKRichEditorPool shared] prewarm];
-    });
+    // TipTap WKWebView prewarm is deferred to conversation open (see WKConversationVC).
+    // Launch-time prewarm (esp. on Simulator) stalls the main thread parsing ~450KB JS.
     [WKSwiftModuleManager.shared didModuleInit];
 //    [WKModuleManager.shared didModuleInit]; // 模块初始化
     
@@ -1252,6 +1252,49 @@ static  UIBackgroundTaskIdentifier _bgTaskToken;
             [context replyTo:message.message];
         }];
     } category:WKPOINT_CATEGORY_MESSAGE_LONGMENUS sort:4000];
+
+    // 创建话题（父群 / 私聊·bot；话题内不显示）
+    [self setMethod:WKPOINT_LONGMENUS_CREATE_TOPIC handler:^id _Nullable(id  _Nonnull param) {
+        WKMessageModel *message = param[@"message"];
+        WKChannel *channel = message.channel;
+        if (!channel) return nil;
+        if (message.status != WK_MESSAGE_SUCCESS || message.messageId == 0) return nil;
+        if (![[WKShudoOrgManager shared] canHostTopicsInChannel:channel]) return nil;
+        UIImage *icon = [GenerateImageUtils generateTintedImgWithImage:[weakSelf imageName:@"Conversation/ContextMenu/Forward"] color:weakSelf.config.contextMenu.primaryColor backgroundColor:nil];
+        return [WKMessageLongMenusItem initWithTitle:LLangW(@"创建话题", weakSelf) icon:icon onTap:^(id<WKConversationContext> context){
+            WKChannel *ch = context.channel ?: channel;
+            [[WKShudoOrgManager shared] promptCreateTopicFromChannel:ch seedMessage:message.message];
+        }];
+    } category:WKPOINT_CATEGORY_MESSAGE_LONGMENUS sort:3800];
+
+    // 管理话题（父群 / 私聊）
+    [self setMethod:WKPOINT_LONGMENUS_MANAGE_TOPICS handler:^id _Nullable(id  _Nonnull param) {
+        WKMessageModel *message = param[@"message"];
+        WKChannel *channel = message.channel;
+        if (!channel) return nil;
+        if (![[WKShudoOrgManager shared] canHostTopicsInChannel:channel]) return nil;
+        UIImage *icon = [GenerateImageUtils generateTintedImgWithImage:[weakSelf imageName:@"Conversation/ContextMenu/Reply"] color:weakSelf.config.contextMenu.primaryColor backgroundColor:nil];
+        return [WKMessageLongMenusItem initWithTitle:LLangW(@"管理话题", weakSelf) icon:icon onTap:^(id<WKConversationContext> context){
+            WKChannel *ch = context.channel ?: channel;
+            [[WKShudoOrgManager shared] openManageTopicsForChannel:ch];
+        }];
+    } category:WKPOINT_CATEGORY_MESSAGE_LONGMENUS sort:3750];
+
+    // 话题内：打开所属群 / 私聊
+    [self setMethod:WKPOINT_LONGMENUS_OPEN_TOPIC_PARENT handler:^id _Nullable(id  _Nonnull param) {
+        WKMessageModel *message = param[@"message"];
+        WKChannel *channel = message.channel;
+        if (!channel || channel.channelType != WK_GROUP) return nil;
+        NSDictionary *meta = [[WKShudoOrgManager shared] subChannelMeta:channel.channelId];
+        NSString *parentNo = meta[@"parent_group_no"] ?: @"";
+        if (!parentNo.length) return nil;
+        NSString *title = [parentNo hasPrefix:@"dm:"] ? LLangW(@"打开私聊", weakSelf) : LLangW(@"打开所属群", weakSelf);
+        UIImage *icon = [GenerateImageUtils generateTintedImgWithImage:[weakSelf imageName:@"Conversation/ContextMenu/Forward"] color:weakSelf.config.contextMenu.primaryColor backgroundColor:nil];
+        return [WKMessageLongMenusItem initWithTitle:title icon:icon onTap:^(id<WKConversationContext> context){
+            WKChannel *ch = context.channel ?: channel;
+            [[WKShudoOrgManager shared] openParentOfTopicChannel:ch];
+        }];
+    } category:WKPOINT_CATEGORY_MESSAGE_LONGMENUS sort:3700];
     
     
     // 查看（气泡详情页，支持系统选字复制）
@@ -1298,8 +1341,11 @@ static  UIBackgroundTaskIdentifier _bgTaskToken;
         UIImage *icon = [GenerateImageUtils generateTintedImgWithImage:[weakSelf imageName:@"Conversation/ContextMenu/Copy"] color:weakSelf.config.contextMenu.primaryColor backgroundColor:nil];
         return [WKMessageLongMenusItem initWithTitle:LLangW(@"复制", weakSelf) icon:icon onTap:^(id<WKConversationContext> context){
             NSString *newContent = @"";
+            NSString *htmlContent = nil;
             if ([message.content isKindOfClass:[WKHermesTableContent class]]) {
-                newContent = [WKBubbleMessageDetailVC plainTextFromTableContent:(WKHermesTableContent *)message.content];
+                WKHermesTableContent *table = (WKHermesTableContent *)message.content;
+                newContent = [WKBubbleMessageDetailVC plainTextFromTableContent:table];
+                htmlContent = [WKBubbleMessageDetailVC htmlFromTableContent:table];
             } else if ([message.content isKindOfClass:[WKHermesCardContent class]]) {
                 WKHermesCardContent *card = (WKHermesCardContent *)message.content;
                 NSMutableString *text = [NSMutableString string];
@@ -1309,16 +1355,30 @@ static  UIBackgroundTaskIdentifier _bgTaskToken;
                 newContent = [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
             } else if ([message.content isKindOfClass:[WKTextContent class]]) {
                 WKTextContent *textConent = (WKTextContent *)message.content;
-                NSRegularExpression *regularExpretion=[NSRegularExpression regularExpressionWithPattern:@"<[^>]*>|\n"
-                                                        options:0
-                                                         error:nil];
-                newContent=[regularExpretion stringByReplacingMatchesInString:textConent.content ?: @"" options:NSMatchingReportProgress range:NSMakeRange(0, textConent.content.length) withTemplate:@""];
+                NSString *raw = textConent.content ?: @"";
+                BOOL isHTML = [textConent.format isEqualToString:@"html"] ||
+                    [raw.lowercaseString containsString:@"<table"];
+                if (isHTML) {
+                    newContent = [WKBubbleMessageDetailVC plainTextFromMessageHTML:raw];
+                    if ([raw.lowercaseString containsString:@"<table"]) {
+                        htmlContent = raw;
+                    }
+                } else {
+                    // Keep newlines; only strip accidental tags if present.
+                    if ([raw containsString:@"<"]) {
+                        NSRegularExpression *tagRe = [NSRegularExpression regularExpressionWithPattern:@"<[^>]*>"
+                                                                                               options:0
+                                                                                                 error:nil];
+                        newContent = [tagRe stringByReplacingMatchesInString:raw options:0 range:NSMakeRange(0, raw.length) withTemplate:@""];
+                    } else {
+                        newContent = raw;
+                    }
+                }
             }
-            if (!newContent.length) {
+            if (!newContent.length && !htmlContent.length) {
                 return;
             }
-            UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-            pasteboard.string = newContent;
+            [WKBubbleMessageDetailVC writePasteboardPlain:newContent html:htmlContent];
             UIView *topView = [WKNavigationManager shared].topViewController.view;
             [topView showHUDWithHide:LLangW(@"已复制", weakSelf)];
         }];

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>叙叨 · 方案 E · 寄语</title>
+  <defs>
+    <linearGradient id="e" x1="70" y1="70" x2="440" y2="440" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1F7A4D"/><stop offset="100%" stop-color="#4ADE80"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="120" fill="url(#e)"/>
+  <path d="M120 168 L392 256 L120 344 L168 256 Z" fill="#fff"/>
+  <path d="M168 256 H300" stroke="#1F7A4D" stroke-width="18" stroke-linecap="round" opacity="0.45"/>
+  <path d="M168 256 L392 256" stroke="#DDF5E8" stroke-width="8" opacity="0.9"/>
+</svg>

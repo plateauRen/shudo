@@ -10,6 +10,7 @@
 #import "WKFormItemCell.h"
 #import "WKFormSection.h"
 #import "WKBaseTableVM.h"
+#import "WKLiquidGlassHelper.h"
 #import <MJRefresh/MJRefresh.h>
 #define tipWidth (self.view.lim_width - 26.0f)
 
@@ -34,6 +35,7 @@ typedef enum : NSUInteger {
     [self.view addSubview:self.tableView];
     self.items = [NSMutableArray array];
     [self.view addSubview:self.placeholderView];
+    [WKLiquidGlassHelper applyGlassListStyleToTableView:self.tableView];
 
     if(self.viewModel && [self.viewModel isKindOfClass:[WKBaseTableVM class]]) {
         WKBaseTableVM *baseVM = (WKBaseTableVM*)self.viewModel;
@@ -100,7 +102,7 @@ typedef enum : NSUInteger {
             _tableView.estimatedSectionFooterHeight = 0;
             _tableView.tableHeaderView =  [[UIView alloc]initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 0.001)];
             _tableView.tableFooterView = [[UIView alloc] init];
-            [_tableView.tableHeaderView setBackgroundColor:[UIColor whiteColor]];
+            [_tableView.tableHeaderView setBackgroundColor:[UIColor clearColor]];
         }
       
        
@@ -177,7 +179,16 @@ typedef enum : NSUInteger {
 }
 
 -(UITableViewStyle) tableViewStyle {
+    if ([WKLiquidGlassHelper isLiquidGlassAvailable]) {
+        if (@available(iOS 13.0, *)) {
+            return UITableViewStyleInsetGrouped;
+        }
+    }
     return UITableViewStyleGrouped;
+}
+
+- (UIScrollView *)primaryScrollViewForLiquidGlass {
+    return self.tableView;
 }
 
 -(CGRect) tableViewFrame {
@@ -255,6 +266,7 @@ typedef enum : NSUInteger {
     WKFormItemModel *itemModel =  self.items[indexPath.section].items[indexPath.row];
     WKFormItemCell *cell = (WKFormItemCell*)tableCell;
     [cell refresh:itemModel];
+    [WKLiquidGlassHelper applyGlassCellBackground:cell];
     if([cell respondsToSelector:@selector(onWillDisplay)]) {
         [cell onWillDisplay];
     }

@@ -54,7 +54,17 @@ export default class DataSourceModule implements IModule {
 
             channelInfo.orgData = data.extra || {};
             channelInfo.orgData.remark = data.remark ?? "";
-            channelInfo.orgData.displayName = data.remark && data.remark !== "" ? data.remark : channelInfo.title;
+            const systemName =
+              channel.channelType === ChannelTypePerson
+                ? WKApp.config.systemAccountDisplayName(channel.channelID)
+                : undefined;
+            if (systemName) {
+              channelInfo.title = systemName;
+            }
+            channelInfo.orgData.displayName =
+              data.remark && data.remark !== ""
+                ? data.remark
+                : systemName || channelInfo.title;
 
             channelInfo.orgData.receipt = data.receipt;
             channelInfo.orgData.robot = data.robot;

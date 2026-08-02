@@ -10,6 +10,7 @@
 #import "WKHermesTableContent.h"
 #import "WKBubbleMessageDetailVC.h"
 #import "WKTapLongTapOrDoubleTapGestureRecognizerEvent.h"
+#import "WKLiquidGlassHelper.h"
 #import "WuKongBase.h"
 
 static const CGFloat kTablePad = 10.0f;
@@ -30,6 +31,8 @@ static const CGFloat kHintH = 16.0f;
 /// Open button host on contentView (outside Texture extract node).
 @property(nonatomic, strong) UIView *buttonBox;
 @property(nonatomic, strong) UIButton *openBtn;
+@property(nonatomic, strong) UIButton *moreBtn;
+@property(nonatomic, strong, nullable) UIVisualEffectView *glassView;
 @property(nonatomic, strong) NSArray<NSNumber *> *colWidths;
 @property(nonatomic, assign) CGFloat gridContentW;
 @property(nonatomic, assign) CGFloat openBtnTopInContent;
@@ -118,13 +121,35 @@ static const CGFloat kHintH = 16.0f;
 - (void)initUI {
     [super initUI];
     self.messageContentView.layer.masksToBounds = YES;
-    self.messageContentView.layer.cornerRadius = 8.0f;
+    self.messageContentView.layer.cornerRadius = 14.0f;
+    self.messageContentView.backgroundColor = UIColor.clearColor;
+
+    UIColor *solid = [WKApp shared].config.cellBackgroundColor;
+    self.glassView = [WKLiquidGlassHelper installInView:self.messageContentView
+                                          cornerRadius:14.0f
+                                           interactive:NO
+                                            solidColor:solid];
+    if (!self.glassView) {
+        self.messageContentView.backgroundColor = solid;
+    }
 
     self.titleLbl = [[UILabel alloc] init];
     self.titleLbl.font = [UIFont boldSystemFontOfSize:15];
     self.titleLbl.numberOfLines = 2;
     self.titleLbl.userInteractionEnabled = NO;
     [self.messageContentView addSubview:self.titleLbl];
+
+    self.moreBtn = [UIButton buttonWithType:UIButtonTypeSystem];
+    if (@available(iOS 13.0, *)) {
+        UIImageSymbolConfiguration *cfg = [UIImageSymbolConfiguration configurationWithPointSize:15 weight:UIImageSymbolWeightMedium];
+        [self.moreBtn setImage:[UIImage systemImageNamed:@"ellipsis" withConfiguration:cfg] forState:UIControlStateNormal];
+    } else {
+        [self.moreBtn setTitle:@"⋯" forState:UIControlStateNormal];
+    }
+    self.moreBtn.tintColor = [WKApp shared].config.tipColor;
+    [self.moreBtn addTarget:self action:@selector(onMorePressed:) forControlEvents:UIControlEventTouchUpInside];
+    [self.messageContentView addSubview:self.moreBtn];
+    [self configureMoreMenu];
 
     self.captionLbl = [[UILabel alloc] init];
     self.captionLbl.font = [UIFont systemFontOfSize:12];
@@ -169,6 +194,46 @@ static const CGFloat kHintH = 16.0f;
     [self.buttonBox addSubview:self.openBtn];
 }
 
+- (void)configureMoreMenu {
+    if (@available(iOS 14.0, *)) {
+        __weak typeof(self) weakSelf = self;
+        UIAction *open = [UIAction actionWithTitle:@"查看完整表格" image:nil identifier:nil handler:^(__kindof UIAction * _Nonnull action) {
+            [weakSelf openDetail];
+        }];
+        UIAction *copyAll = [UIAction actionWithTitle:@"复制全部" image:nil identifier:nil handler:^(__kindof UIAction * _Nonnull action) {
+            [weakSelf copyTablePlainText];
+        }];
+        self.moreBtn.menu = [UIMenu menuWithTitle:@"" children:@[open, copyAll]];
+        self.moreBtn.showsMenuAsPrimaryAction = YES;
+    }
+}
+
+- (void)copyTablePlainText {
+    if (![self.messageModel.content isKindOfClass:[WKHermesTableContent class]]) return;
+    WKHermesTableContent *content = (WKHermesTableContent *)self.messageModel.content;
+    NSString *text = [WKBubbleMessageDetailVC plainTextFromTableContent:content];
+    NSString *html = [WKBubbleMessageDetailVC htmlFromTableContent:content];
+    if (!text.length && !html.length) return;
+    [WKBubbleMessageDetailVC writePasteboardPlain:text html:html];
+    [[WKNavigationManager shared].topViewController.view showHUDWithHide:@"已复制"];
+}
+
+- (void)onMorePressed:(UIButton *)sender {
+    if (@available(iOS 14.0, *)) {
+        return; // menu handles it
+    }
+    __weak typeof(self) weakSelf = self;
+    UIAlertController *sheet = [UIAlertController alertControllerWithTitle:@"表格设置" message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    [sheet addAction:[UIAlertAction actionWithTitle:@"查看完整表格" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        [weakSelf openDetail];
+    }]];
+    [sheet addAction:[UIAlertAction actionWithTitle:@"复制全部" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        [weakSelf copyTablePlainText];
+    }]];
+    [sheet addAction:[UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil]];
+    [[WKNavigationManager shared].topViewController presentViewController:sheet animated:YES completion:nil];
+}
+
 - (void)refresh:(WKMessageModel *)model {
     [super refresh:model];
     WKHermesTableContent *content = (WKHermesTableContent *)model.content;
@@ -182,10 +247,17 @@ static const CGFloat kHintH = 16.0f;
     self.messageContentView.userInteractionEnabled = YES;
     self.scrollView.userInteractionEnabled = YES;
 
-    self.messageContentView.backgroundColor = [WKApp shared].config.cellBackgroundColor;
+    if (!self.glassView) {
+        self.messageContentView.backgroundColor = [WKApp shared].config.cellBackgroundColor;
+    } else {
+        self.messageContentView.backgroundColor = UIColor.clearColor;
+        self.glassView.frame = self.messageContentView.bounds;
+        [self.messageContentView sendSubviewToBack:self.glassView];
+    }
     self.titleLbl.textColor = [WKApp shared].config.defaultTextColor;
     self.captionLbl.textColor = [WKApp shared].config.tipColor;
     self.hintLbl.textColor = [WKApp shared].config.tipColor;
+    self.moreBtn.tintColor = [WKApp shared].config.tipColor;
     UIColor *theme = [WKApp shared].config.themeColor ?: [UIColor systemBlueColor];
     [self.openBtn setTitleColor:theme forState:UIControlStateNormal];
 
@@ -309,11 +381,18 @@ static const CGFloat kHintH = 16.0f;
 
     CGFloat innerW = self.messageContentView.lim_width - kTablePad * 2;
     CGFloat y = kTablePad;
+    CGFloat moreW = 28.0f;
 
-    self.titleLbl.frame = CGRectMake(kTablePad, y, innerW, 0);
+    if (self.glassView) {
+        self.glassView.frame = self.messageContentView.bounds;
+        [self.messageContentView sendSubviewToBack:self.glassView];
+    }
+
+    self.moreBtn.frame = CGRectMake(self.messageContentView.lim_width - kTablePad - moreW, y, moreW, moreW);
+    self.titleLbl.frame = CGRectMake(kTablePad, y, MAX(40, innerW - moreW - 6), 0);
     [self.titleLbl sizeToFit];
-    self.titleLbl.lim_width = innerW;
-    y = self.titleLbl.lim_bottom + 4.0f;
+    self.titleLbl.lim_width = MAX(40, innerW - moreW - 6);
+    y = MAX(self.titleLbl.lim_bottom, self.moreBtn.lim_bottom) + 4.0f;
 
     if (!self.captionLbl.hidden) {
         self.captionLbl.frame = CGRectMake(kTablePad, y, innerW, 0);

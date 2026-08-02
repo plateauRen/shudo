@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Shudo Logo P Soft Smile">
+  <title>Shudo P Soft Smile</title>
+  <defs>
+    <linearGradient id="pg" x1="40" y1="472" x2="480" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#86EFAC"/>
+      <stop offset="50%" stop-color="#22C55E"/>
+      <stop offset="100%" stop-color="#1F7A4D"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#pg)"/>
+  <circle cx="188" cy="214" r="28" fill="#17141f"/>
+  <circle cx="324" cy="214" r="28" fill="#17141f"/>
+  <path d="M156 318c36 56 164 56 200 0" fill="none" stroke="#17141f" stroke-width="36" stroke-linecap="round"/>
+</svg>

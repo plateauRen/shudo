@@ -1,6 +1,6 @@
 import WKSDK from "wukongimjssdk";
 import { ChannelInfoListener } from "wukongimjssdk";
-import { Channel, ChannelInfo, ChannelTypePerson } from "wukongimjssdk";
+import { Channel, ChannelInfo, ChannelTypePerson, ChannelTypeGroup } from "wukongimjssdk";
 import React, { Component } from "react";
 import { ConversationWrap, MessageWrap } from "../../Service/Model";
 import { getTimeStringAutoShort2 } from '../../Utils/time'
@@ -17,9 +17,14 @@ import { BeatLoader } from "react-spinners";
 import { RevokeCell } from "../../Messages/Revoke";
 import { FlameMessageCell } from "../../Messages/Flame";
 import WKAvatar from "../WKAvatar";
+import { shudoOrgManager } from "../../Service/ShudoOrgManager";
+import SubChannelsPanel from "../SubChannelsPanel";
+
 export interface ConversationListProps {
     conversations: ConversationWrap[]
     select?: Channel
+    /** 当前选中的分组 id；空为全部 */
+    currentFolderId?: string
     onClick?: (conversation: ConversationWrap) => void
     onClearMessages?: (channel: Channel) => void
 }
@@ -62,17 +67,17 @@ export default class ConversationList extends Component<ConversationListProps, C
         this.contextMenusContext.hide()
     }
     _handleContextMenu(conversationWrap: ConversationWrap, event: React.MouseEvent) {
-        this.contextMenusContext.show(event)
+        // 先写入选中项再弹出菜单，否则菜单项（如「创建话题」）会读到旧状态
         this.setState({
             selectConversationWrap: conversationWrap
+        }, () => {
+            this.contextMenusContext.show(event)
         })
     }
 
     _getTypingUI(conversationWrap: ConversationWrap) {
-        const { select } = this.props
         const typing = TypingManager.shared.getTyping(conversationWrap.channel)
-        const selected = select && select.isEqual(conversationWrap.channel)
-        return <div className="wk-typing"><BeatLoader size={4} margin={3} color={selected ? "white" : "var(--wk-color-theme)"} />&nbsp;&nbsp;{conversationWrap.channel.channelType !== ChannelTypePerson ? typing?.fromName : ""}正在输入</div>
+        return <div className="wk-typing"><BeatLoader size={4} margin={3} color="var(--wk-color-theme)" />&nbsp;&nbsp;{conversationWrap.channel.channelType !== ChannelTypePerson ? typing?.fromName : ""}正在输入</div>
     }
 
     lastContent(conversationWrap: ConversationWrap) {
@@ -175,9 +180,15 @@ export default class ConversationList extends Component<ConversationListProps, C
                     <div className="wk-conversationlist-item-right-first-line">
                         <div className="wk-conversationlist-item-name">
                             <h3>
-                                {channelInfo?.orgData.displayName}
-
-
+                                {(() => {
+                                    const sub = shudoOrgManager.getSubChannelMeta(
+                                        conversationWrap.channel.channelID
+                                    );
+                                    if (sub) {
+                                        return `#${sub.title}`;
+                                    }
+                                    return channelInfo?.orgData.displayName;
+                                })()}
                             </h3>
                             {
                                 channelInfo?.orgData.identityIcon ? <img style={{ "marginLeft": "4px", "width": channelInfo?.orgData?.identitySize.width, "height": channelInfo?.orgData?.identitySize.height }} src={channelInfo?.orgData.identityIcon}></img> : undefined
@@ -241,8 +252,175 @@ export default class ConversationList extends Component<ConversationListProps, C
     }
 
     render() {
-        const { conversations, select } = this.props
+        const { conversations, select, currentFolderId } = this.props
         const { selectConversationWrap } = this.state
+        const ch = selectConversationWrap?.channel
+        const isGroup = ch?.channelType === ChannelTypeGroup
+        const isSub = ch ? !!shudoOrgManager.getSubChannelMeta(ch.channelID) : false
+        const containing = ch
+            ? shudoOrgManager.foldersContaining(ch.channelID, ch.channelType)
+            : []
+        const currentFolder = currentFolderId
+            ? shudoOrgManager.folders.find((f) => f.folder_id === currentFolderId)
+            : undefined
+
+        const menus: { title: string; onClick: () => void }[] = [
+            {
+                title: selectConversationWrap?.channelInfo?.top ? "取消置顶" : "置顶",
+                onClick: () => {
+                    this.onTop(selectConversationWrap?.channelInfo!)
+                },
+            },
+            {
+                title: selectConversationWrap?.channelInfo?.mute
+                    ? "关闭免打扰"
+                    : "开启免打扰",
+                onClick: () => {
+                    this.onMute(selectConversationWrap?.channelInfo!)
+                },
+            },
+        ]
+
+        // 话题相关：父频道可创建/管理；话题内可回所属群/私聊
+        if (ch && shudoOrgManager.canHostTopics(ch)) {
+            menus.push({
+                title: "创建话题",
+                onClick: async () => {
+                    const title = window.prompt("话题名称")
+                    if (!title || !title.trim()) return
+                    try {
+                        const created = isGroup
+                            ? await shudoOrgManager.createSubChannel(
+                                  ch.channelID,
+                                  title.trim()
+                              )
+                            : await shudoOrgManager.createTopicFromPerson(
+                                  shudoOrgManager.resolvePersonPeerUid(ch) ||
+                                      ch.channelID,
+                                  title.trim()
+                              )
+                        Toast.success("已创建话题")
+                        if (created?.sub_group_no) {
+                            WKApp.endpoints.showConversation(
+                                new Channel(created.sub_group_no, ChannelTypeGroup)
+                            )
+                        }
+                    } catch (e: any) {
+                        Toast.error(e?.msg || e?.message || "创建失败")
+                    }
+                },
+            })
+            menus.push({
+                title: "管理话题",
+                onClick: () => {
+                    SubChannelsPanel.open(ch)
+                },
+            })
+        } else if (ch && isSub) {
+            const meta = shudoOrgManager.getSubChannelMeta(ch.channelID)
+            const parentNo = meta?.parent_group_no || ""
+            if (parentNo) {
+                menus.push({
+                    title: parentNo.startsWith("dm:") ? "打开私聊" : "打开所属群",
+                    onClick: () => {
+                        if (parentNo.startsWith("dm:")) {
+                            const peer = parentNo.slice(3)
+                            if (peer) {
+                                WKApp.endpoints.showConversation(
+                                    new Channel(peer, ChannelTypePerson)
+                                )
+                            }
+                        } else {
+                            WKApp.endpoints.showConversation(
+                                new Channel(parentNo, ChannelTypeGroup)
+                            )
+                        }
+                    },
+                })
+            }
+        }
+
+        for (const f of shudoOrgManager.folders || []) {
+            if (!ch) break
+            if (shudoOrgManager.folderContains(f, ch.channelID, ch.channelType)) {
+                continue
+            }
+            menus.push({
+                title: `移到分组：${f.name}`,
+                onClick: async () => {
+                    try {
+                        await shudoOrgManager.addChannelToFolder(
+                            f.folder_id,
+                            ch.channelID,
+                            ch.channelType
+                        )
+                        Toast.success(`已加入「${f.name}」`)
+                    } catch (e: any) {
+                        Toast.error(e?.msg || e?.message || "操作失败")
+                    }
+                },
+            })
+        }
+
+        if (currentFolder && ch && shudoOrgManager.folderContains(currentFolder, ch.channelID, ch.channelType)) {
+            menus.push({
+                title: `从「${currentFolder.name}」移除`,
+                onClick: async () => {
+                    try {
+                        await shudoOrgManager.removeChannelFromFolder(
+                            currentFolder.folder_id,
+                            ch.channelID,
+                            ch.channelType
+                        )
+                        Toast.success("已从分组移除")
+                    } catch (e: any) {
+                        Toast.error(e?.msg || e?.message || "操作失败")
+                    }
+                },
+            })
+        } else {
+            for (const f of containing) {
+                if (!ch) break
+                menus.push({
+                    title: `从「${f.name}」移除`,
+                    onClick: async () => {
+                        try {
+                            await shudoOrgManager.removeChannelFromFolder(
+                                f.folder_id,
+                                ch.channelID,
+                                ch.channelType
+                            )
+                            Toast.success(`已从「${f.name}」移除`)
+                        } catch (e: any) {
+                            Toast.error(e?.msg || e?.message || "操作失败")
+                        }
+                    },
+                })
+            }
+        }
+
+        menus.push(
+            {
+                title: "关闭聊天窗口",
+                onClick: () => {
+                    this.onCloseChat(selectConversationWrap?.channel!)
+                },
+            },
+            {
+                title: "清空聊天记录",
+                onClick: () => {
+                    this.onClearMessages(selectConversationWrap?.channel!)
+                },
+            },
+            {
+                title: "关闭窗口并清空聊天记录",
+                onClick: () => {
+                    this.onCloseChat(selectConversationWrap?.channel!)
+                    this.onClearMessages(selectConversationWrap?.channel!)
+                },
+            }
+        )
+
         return <div id="wk-conversationlist" className="wk-conversationlist" onScroll={this._handleScroll.bind(this)}>
             {
                 conversations && conversations.map((conversationWrap) => {
@@ -250,36 +428,13 @@ export default class ConversationList extends Component<ConversationListProps, C
                 })
             }
 
-            <ContextMenus onContext={(ctx) => {
+            <ContextMenus
+              key={selectConversationWrap?.channel?.getChannelKey?.() || "ctx"}
+              onContext={(ctx) => {
                 this.contextMenusContext = ctx
-            }} menus={[
-                {
-                    title: selectConversationWrap?.channelInfo?.top ? "取消置顶" : "置顶", onClick: () => {
-                        this.onTop(selectConversationWrap?.channelInfo!)
-                    }
-                },
-                {
-                    title: selectConversationWrap?.channelInfo?.mute ? "关闭免打扰" : "开启免打扰", onClick: () => {
-                        this.onMute(selectConversationWrap?.channelInfo!)
-                    }
-                },
-                {
-                    title: "关闭聊天窗口", onClick: () => {
-                        this.onCloseChat(selectConversationWrap?.channel!)
-                    }
-                },
-                {
-                    title: "清空聊天记录", onClick: () => {
-                        this.onClearMessages(selectConversationWrap?.channel!)
-                    }
-                },
-                {
-                    title: "关闭窗口并清空聊天记录", onClick: () => {
-                        this.onCloseChat(selectConversationWrap?.channel!)
-                        this.onClearMessages(selectConversationWrap?.channel!)
-                    }
-                },
-            ]} />
+              }}
+              menus={menus}
+            />
         </div>
     }
 }

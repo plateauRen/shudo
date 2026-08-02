@@ -15,7 +15,7 @@ typedef enum : NSUInteger {
     WKViewConfigChangeTypeStyle, // 样式 （深色模式，亮色模式）
     WKViewConfigChangeTypeLang, // 多语言
     WKViewConfigChangeTypeModule, // 模块发生改变
-    WKViewConfigChangeTypeBrandTheme, // 品牌主题色（荧光橙 / 荧光蓝）
+    WKViewConfigChangeTypeBrandTheme, // 品牌主题色（石青 / 玄青 / 松烟 / 雾蓝）
 } WKViewConfigChangeType;
 
 @interface WKFinishButton : UIButton
@@ -56,6 +56,9 @@ typedef enum : NSUInteger {
 
 /// 多语言标题 ，当多语言发送变化的时候会调用此标题
 -(NSString*) langTitle;
+
+/// Primary scroll view used for Liquid Glass scroll-edge soft treatment with the nav bar.
+-(nullable UIScrollView *)primaryScrollViewForLiquidGlass;
 @end
 
 NS_ASSUME_NONNULL_END

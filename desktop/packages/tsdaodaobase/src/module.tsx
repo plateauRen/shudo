@@ -16,6 +16,14 @@ import { Howl, Howler } from "howler";
 import WKApp, { FriendApply, FriendApplyState, ThemeMode } from "./App";
 import ChannelQRCode from "./Components/ChannelQRCode";
 import { ChannelSettingRouteData } from "./Components/ChannelSetting/context";
+import SubChannelsPanel from "./Components/SubChannelsPanel";
+import { shudoOrgManager } from "./Service/ShudoOrgManager";
+
+// iOS-style toolbar icons (data URIs for clean rendering)
+const emojiIconSVG = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8f959e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>');
+const atIconSVG = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8f959e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 006 0v-1a10 10 0 10-3.92 7.94"/></svg>');
+const clipIconSVG = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8f959e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>');
+const imageIconSVG = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8f959e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>');
 import { IndexTableItem } from "./Components/IndexTable";
 import { InputEdit } from "./Components/InputEdit";
 import {
@@ -41,7 +49,7 @@ import {
 } from "./Messages/SignalMessage/signalmessage";
 import { SystemCell } from "./Messages/System";
 import { TextCell } from "./Messages/Text";
-import { HtmlMessageText } from "./Messages/HtmlText";
+import { HtmlMessageText, getMessageTextFormat, getMessageTextHtml } from "./Messages/HtmlText";
 import { TimeCell } from "./Messages/Time";
 import { UnknownCell } from "./Messages/Unknown";
 import { UnsupportCell, UnsupportContent } from "./Messages/Unsupport";
@@ -67,6 +75,7 @@ import { TypingCell } from "./Messages/Typing";
 import { LottieSticker, LottieStickerCell } from "./Messages/LottieSticker";
 import { LocationCell, LocationContent } from "./Messages/Location";
 import { Toast } from "@douyinfe/semi-ui";
+import { translateManager } from "./Service/TranslateManager";
 import { ChannelSettingManager } from "./Service/ChannelSetting";
 import { DefaultEmojiService } from "./Service/EmojiService";
 import IconClick from "./Components/IconClick";
@@ -91,7 +100,9 @@ import {
   HermesCardCell,
   HermesCardContent,
 } from "./Messages/Hermes";
-import { HermesTableCell, HermesTableContent } from "./Messages/Hermes/Table";
+import { HermesTableCell, HermesTableContent, hermesTableToHtml, hermesTableToPlainText } from "./Messages/Hermes/Table";
+import { HermesAudioCell, HermesAudioContent } from "./Messages/Hermes/Audio";
+import { htmlToPlainTextWithTables } from "@tsdaodao/rich-editor";
 
 export default class BaseModule implements IModule {
   messageTone?: Howl;
@@ -148,6 +159,8 @@ export default class BaseModule implements IModule {
             return HermesActionCell;
           case MessageContentTypeConst.hermesTable:
             return HermesTableCell;
+          case MessageContentTypeConst.hermesAudio:
+            return HermesAudioCell;
           case MessageContentType.signalMessage: // 端对端加密错误消息
           case MessageContentTypeConst.approveGroupMember: // 审批群成员
             return ApproveGroupMemberCell;
@@ -216,6 +229,10 @@ export default class BaseModule implements IModule {
     WKSDK.shared().register(
       MessageContentTypeConst.hermesTable,
       () => new HermesTableContent()
+    );
+    WKSDK.shared().register(
+      MessageContentTypeConst.hermesAudio,
+      () => new HermesAudioContent()
     );
     // 加入组织
     WKSDK.shared().register(
@@ -478,7 +495,7 @@ export default class BaseModule implements IModule {
       return (
         <EmojiToolbar
           conversationContext={ctx}
-          icon={require("./assets/toolbars/func_face_normal.svg").default}
+          icon={emojiIconSVG}
         ></EmojiToolbar>
       );
     });
@@ -490,7 +507,7 @@ export default class BaseModule implements IModule {
       }
       return (
         <IconClick
-          icon={require("./assets/toolbars/func_mention_normal.svg").default}
+          icon={atIconSVG}
           onClick={() => {
             ctx.messageInputContext().insertText("@");
           }}
@@ -501,7 +518,7 @@ export default class BaseModule implements IModule {
     WKApp.endpoints.registerChatToolbar("chattoolbar.screenshot", (ctx) => {
       return (
         <IconClick
-          icon={require("./assets/toolbars/func_screenshot.svg").default}
+          icon={clipIconSVG}
           onClick={() => {
             if ((window as any).__POWERED_ELECTRON__) {
               (window as any).ipc.send('screenshots-start', {})
@@ -515,7 +532,7 @@ export default class BaseModule implements IModule {
     WKApp.endpoints.registerChatToolbar("chattoolbar.image", (ctx) => {
       return (
         <ImageToolbar
-          icon={require("./assets/toolbars/func_upload_image.svg").default}
+          icon={imageIconSVG}
           conversationContext={ctx}
         ></ImageToolbar>
       );
@@ -546,6 +563,30 @@ export default class BaseModule implements IModule {
     WKApp.endpoints.registerMessageContextMenus(
       "contextmenus.copy",
       (message) => {
+        const writeClipboard = (plain: string, html?: string) => {
+          if (!plain && !html) return;
+          (function (text, markup) {
+            document.oncopy = function (e) {
+              if (markup) e.clipboardData?.setData("text/html", markup);
+              e.clipboardData?.setData("text/plain", text || "");
+              e.clipboardData?.setData("text", text || "");
+              e.preventDefault();
+              document.oncopy = null;
+            };
+          })(plain, html);
+          document.execCommand("Copy");
+        };
+
+        if (message.contentType === MessageContentTypeConst.hermesTable) {
+          return {
+            title: "复制",
+            onClick: () => {
+              const c = message.content as HermesTableContent;
+              writeClipboard(hermesTableToPlainText(c), hermesTableToHtml(c));
+            },
+          };
+        }
+
         if (message.contentType !== MessageContentType.text) {
           return null;
         }
@@ -553,14 +594,19 @@ export default class BaseModule implements IModule {
         return {
           title: "复制",
           onClick: () => {
-            (function (s) {
-              document.oncopy = function (e) {
-                e.clipboardData?.setData("text", s);
-                e.preventDefault();
-                document.oncopy = null;
-              };
-            })((message.content as MessageText).text || "");
-            document.execCommand("Copy");
+            const format = getMessageTextFormat(message.content);
+            let text = "";
+            let html: string | undefined;
+            if (format === "html") {
+              const raw = getMessageTextHtml(message.content);
+              text = htmlToPlainTextWithTables(raw);
+              if (/<table[\s>]/i.test(raw || "")) {
+                html = raw;
+              }
+            } else {
+              text = (message.content as MessageText).text || "";
+            }
+            writeClipboard(text, html);
           },
         };
       },
@@ -593,6 +639,179 @@ export default class BaseModule implements IModule {
           },
         };
       }
+    );
+    WKApp.endpoints.registerMessageContextMenus(
+      "contextmenus.createTopic",
+      (message) => {
+        const channel = message.channel;
+        if (!channel || !shudoOrgManager.canHostTopics(channel)) return null;
+        return {
+          title: "创建话题",
+          onClick: async () => {
+            let hint = "";
+            try {
+              if (message.contentType === MessageContentType.text) {
+                hint = (message.content as MessageText)?.text || "";
+              } else {
+                hint = message.content?.conversationDigest || "";
+              }
+            } catch {
+              hint = "";
+            }
+            hint = (hint || "").replace(/\s+/g, " ").trim().slice(0, 20);
+            const title = window.prompt("话题名称", hint || undefined);
+            if (!title || !title.trim()) return;
+            const topicName = title.trim();
+            try {
+              // 保留原消息完整内容，写入话题历史
+              const seedPayload: Record<string, any> = {
+                type: message.contentType,
+              };
+              try {
+                if (typeof (message.content as any)?.encodeJSON === "function") {
+                  Object.assign(
+                    seedPayload,
+                    (message.content as any).encodeJSON() || {}
+                  );
+                }
+              } catch {
+                /* ignore */
+              }
+              if (
+                message.contentType === MessageContentType.text &&
+                !seedPayload.content
+              ) {
+                seedPayload.content =
+                  (message.content as MessageText)?.text || hint || topicName;
+              }
+              if (!seedPayload.type) {
+                seedPayload.type = MessageContentType.text;
+                seedPayload.content =
+                  hint ||
+                  message.content?.conversationDigest ||
+                  `话题「${topicName}」`;
+              }
+
+              let topicChannel: Channel | undefined;
+              if (channel.channelType === ChannelTypeGroup) {
+                const created = await shudoOrgManager.createSubChannel(
+                  channel.channelID,
+                  topicName,
+                  { payload: seedPayload, fromUid: message.fromUID }
+                );
+                if (!created?.sub_group_no) {
+                  Toast.error("创建失败：未返回话题频道");
+                  return;
+                }
+                topicChannel = new Channel(created.sub_group_no, ChannelTypeGroup);
+              } else {
+                // 私聊（含 Hermes）：走扩展服务，避免 group/create 非好友拦截
+                const peerUid =
+                  shudoOrgManager.resolvePersonPeerUid(
+                    channel,
+                    message.fromUID
+                  ) || channel.channelID;
+                const created = await shudoOrgManager.createTopicFromPerson(
+                  peerUid,
+                  topicName,
+                  message.fromUID,
+                  { payload: seedPayload, fromUid: message.fromUID }
+                );
+                if (!created?.sub_group_no) {
+                  Toast.error("创建失败：未返回话题频道");
+                  return;
+                }
+                topicChannel = new Channel(
+                  created.sub_group_no,
+                  ChannelTypeGroup
+                );
+              }
+              // 刷新头像缓存 + 打开话题
+              WKApp.shared.changeChannelAvatarTag(topicChannel);
+              try {
+                await WKSDK.shared().channelManager.fetchChannelInfo(topicChannel);
+              } catch {
+                /* ignore */
+              }
+              Toast.success("已创建话题");
+              WKApp.endpoints.showConversation(topicChannel);
+            } catch (e: any) {
+              Toast.error(e?.msg || e?.message || "创建话题失败");
+            }
+          },
+        };
+      },
+      1800
+    );
+    WKApp.endpoints.registerMessageContextMenus(
+      "contextmenus.manageTopics",
+      (message) => {
+        const channel = message.channel;
+        if (!channel || !shudoOrgManager.canHostTopics(channel)) return null;
+        return {
+          title: "管理话题",
+          onClick: () => {
+            SubChannelsPanel.open(channel);
+          },
+        };
+      },
+      1790
+    );
+    WKApp.endpoints.registerMessageContextMenus(
+      "contextmenus.openTopicParent",
+      (message) => {
+        const channel = message.channel;
+        if (!channel || channel.channelType !== ChannelTypeGroup) return null;
+        const meta = shudoOrgManager.getSubChannelMeta(channel.channelID);
+        const parentNo = meta?.parent_group_no || "";
+        if (!parentNo) return null;
+        const isDm = parentNo.startsWith("dm:");
+        return {
+          title: isDm ? "打开私聊" : "打开所属群",
+          onClick: () => {
+            if (isDm) {
+              const peer = parentNo.slice(3);
+              if (peer) {
+                WKApp.endpoints.showConversation(
+                  new Channel(peer, ChannelTypePerson)
+                );
+              }
+            } else {
+              WKApp.endpoints.showConversation(
+                new Channel(parentNo, ChannelTypeGroup)
+              );
+            }
+          },
+        };
+      },
+      1780
+    );
+    WKApp.endpoints.registerMessageContextMenus(
+      "contextmenus.translate",
+      (message) => {
+        if (message.contentType !== MessageContentType.text) {
+          return null;
+        }
+        const plain = translateManager.plainTextFromMessage(message);
+        if (!plain) return null;
+        const hasShown =
+          Boolean(translateManager.translationAttachedToMessage(message)) &&
+          !translateManager.isTranslationHiddenForMessage(message);
+        return {
+          title: hasShown ? "显示原文" : "翻译",
+          onClick: () => {
+            if (hasShown) {
+              translateManager.setTranslationHidden(true, message);
+              return;
+            }
+            translateManager.setTranslationHidden(false, message);
+            translateManager.translateMessage(message, true).catch((err) => {
+              Toast.error(err?.message || "翻译失败");
+            });
+          },
+        };
+      },
+      1500
     );
     WKApp.endpoints.registerMessageContextMenus(
       "contextmenus.muli",
@@ -1154,6 +1373,56 @@ export default class BaseModule implements IModule {
             },
           })
         );
+
+        // 话题：父群管理入口；话题内展示所属群
+        const topicMeta = shudoOrgManager.getSubChannelMeta(channel.channelID);
+        if (!topicMeta) {
+          rows.push(
+            new Row({
+              cell: ListItem,
+              properties: {
+                title: "话题",
+                subTitle: "管理群内话题，常驻会话列表",
+                onClick: () => {
+                  context.push(
+                    <SubChannelsPanel parent={channel} />,
+                    new RouteContextConfig({ title: "话题" })
+                  );
+                },
+              },
+            })
+          );
+        } else {
+          const parentNo = topicMeta.parent_group_no || "";
+          const isDmParent = parentNo.startsWith("dm:");
+          rows.push(
+            new Row({
+              cell: ListItem,
+              properties: {
+                title: isDmParent ? "所属私聊" : "所属群",
+                subTitle: isDmParent
+                  ? "打开创建该话题的私聊"
+                  : `#${topicMeta.title || ""} · 返回父群`,
+                onClick: () => {
+                  if (!parentNo) return;
+                  if (isDmParent) {
+                    const peer = parentNo.slice(3);
+                    if (peer) {
+                      WKApp.endpoints.showConversation(
+                        new Channel(peer, ChannelTypePerson)
+                      );
+                    }
+                  } else {
+                    WKApp.endpoints.showConversation(
+                      new Channel(parentNo, ChannelTypeGroup)
+                    );
+                  }
+                },
+              },
+            })
+          );
+        }
+
         rows.push(
           new Row({
             cell: ListItemMuliteLine,
@@ -1322,6 +1591,24 @@ export default class BaseModule implements IModule {
                     .catch(() => {
                       ctx.loading = false;
                     });
+                },
+              },
+            })
+          );
+        }
+
+        if (channel.channelType === ChannelTypePerson) {
+          rows.push(
+            new Row({
+              cell: ListItem,
+              properties: {
+                title: "话题",
+                subTitle: "管理与对方的话题",
+                onClick: () => {
+                  context.push(
+                    <SubChannelsPanel parent={channel} />,
+                    new RouteContextConfig({ title: "话题" })
+                  );
                 },
               },
             })

@@ -19,6 +19,8 @@
 #import "WKTableSectionUtil.h"
 #import "WKGroupQRCodeVC.h"
 #import "WKGlobalSearchResultController.h"
+#import "WKSubChannelsVC.h"
+#import "WKShudoOrgManager.h"
 
 @interface WKConversationSettingVM ()<WKChannelManagerDelegate>
 
@@ -226,6 +228,50 @@
             ]
         };
     } category:WKPOINT_CATEGORY_CHANNELSETTING sort:89700];
+
+    // 话题：父群/私聊 → 管理；话题内 → 所属群/私聊
+    [[WKApp shared] setMethod:@"channelsetting.subchannels" handler:^id _Nullable(id  _Nonnull param) {
+        WKChannel *channel = param[@"channel"];
+        if ([[WKShudoOrgManager shared] canHostTopicsInChannel:channel]) {
+            return @{
+                @"height": @(0.0f),
+                @"items": @[
+                    @{
+                        @"class": WKLabelItemModel.class,
+                        @"label": LLang(@"话题"),
+                        @"value": LLang(@"管理"),
+                        @"showBottomLine": @(NO),
+                        @"showTopLine": @(NO),
+                        @"onClick": ^{
+                            [[WKShudoOrgManager shared] openManageTopicsForChannel:channel];
+                        }
+                    }
+                ],
+            };
+        }
+        if (channel.channelType == WK_GROUP) {
+            NSDictionary *meta = [[WKShudoOrgManager shared] subChannelMeta:channel.channelId];
+            NSString *parentNo = meta[@"parent_group_no"] ?: @"";
+            if (!parentNo.length) return nil;
+            BOOL isDm = [parentNo hasPrefix:@"dm:"];
+            return @{
+                @"height": @(0.0f),
+                @"items": @[
+                    @{
+                        @"class": WKLabelItemModel.class,
+                        @"label": isDm ? LLang(@"所属私聊") : LLang(@"所属群"),
+                        @"value": isDm ? LLang(@"打开") : [NSString stringWithFormat:@"#%@", meta[@"title"] ?: @""],
+                        @"showBottomLine": @(NO),
+                        @"showTopLine": @(NO),
+                        @"onClick": ^{
+                            [[WKShudoOrgManager shared] openParentOfTopicChannel:channel];
+                        }
+                    }
+                ],
+            };
+        }
+        return nil;
+    } category:WKPOINT_CATEGORY_CHANNELSETTING sort:89650];
     
     
     [[WKApp shared] setMethod:@"channelsetting.hsitory" handler:^id _Nullable(id  _Nonnull param) {

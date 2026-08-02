@@ -161,6 +161,10 @@ export default class ContactsList extends Component<any, ContactsState> {
                         if (item.remark && item.remark !== "") {
                             name = item.remark
                         }
+                        const systemName = WKApp.config.systemAccountDisplayName(item.uid)
+                        if (systemName && (!item.remark || item.remark === "")) {
+                            name = systemName
+                        }
                         return <div key={item.uid} className={classnames("wk-contacts-section-item", WKApp.shared.openChannel?.channelType === ChannelTypePerson && WKApp.shared.openChannel?.channelID === item.uid ? "wk-contacts-section-item-selected" : undefined)} onClick={() => {
                             const channel = new Channel(item.uid, ChannelTypePerson)
                             WKApp.endpoints.showConversation(channel)

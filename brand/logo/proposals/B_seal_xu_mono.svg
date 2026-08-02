@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
+  <title>叙叨 · B 口白 · mono</title>
+  <path d="M150 300 C150 220 210 170 250 170 V230 C224 230 198 252 198 286 V300 H150 Z"/>
+  <path d="M150 300 C150 340 178 370 220 384" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round"/>
+  <path d="M362 212 C362 292 302 342 262 342 V282 C288 282 314 260 314 226 V212 H362 Z" opacity="0.8"/>
+  <path d="M362 212 C362 172 334 142 292 128" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round" opacity="0.8"/>
+</svg>

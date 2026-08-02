@@ -1,22 +1,106 @@
 .wk-hermes-table {
   width: min(320px, 100%);
-  background: var(--wk-color-item, #fff);
-  border-radius: 8px;
+  position: relative;
+  background: var(--wk-surface-raised);
+  border: 1px solid var(--wk-border-subtle);
+  border-radius: var(--wk-radius-md);
   padding: 10px;
   box-sizing: border-box;
+  box-shadow: var(--wk-shadow-sm);
 }
 
 body[theme-mode="dark"] .wk-hermes-table {
-  background: var(--wk-color-secondary);
+  background: var(--wk-surface-raised);
+  border-color: var(--wk-border);
+  box-shadow: var(--wk-shadow-sm);
+}
+
+.wk-hermes-table-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 4px;
 }
 
 .wk-hermes-table-title {
+  flex: 1;
   font-size: 15px;
   font-weight: 600;
-  color: var(--wk-text-item, #111);
-  margin-bottom: 4px;
+  color: var(--wk-text-primary);
   word-break: break-word;
   cursor: pointer;
+}
+
+.wk-hermes-table-morebtn {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.04);
+  color: #8f959e;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.wk-hermes-table-morebtn:hover {
+  color: var(--wk-color-theme, #0E7490);
+  background: rgba(255, 69, 0, 0.1);
+}
+
+body[theme-mode="dark"] .wk-hermes-table-morebtn {
+  background: rgba(255, 255, 255, 0.06);
+  color: #a0a0a0;
+}
+
+.wk-hermes-table-menu {
+  position: absolute;
+  top: 40px;
+  right: 8px;
+  z-index: 5;
+  min-width: 148px;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(22px) saturate(1.5);
+  -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+}
+
+body[theme-mode="dark"] .wk-hermes-table-menu {
+  background: rgba(36, 36, 36, 0.88);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.wk-hermes-table-menu button {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  color: inherit;
+}
+
+.wk-hermes-table-menu button:hover {
+  background: rgba(255, 69, 0, 0.1);
+}
+
+.wk-hermes-table-menu-sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+body[theme-mode="dark"] .wk-hermes-table-menu-sep {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .wk-hermes-table-caption {
@@ -93,7 +177,7 @@ body[theme-mode="dark"] .wk-hermes-table-grid tr.alt td {
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--wk-color-theme, #FF4500);
+  color: var(--wk-color-theme, #0E7490);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;

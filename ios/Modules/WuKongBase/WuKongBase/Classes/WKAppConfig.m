@@ -8,6 +8,7 @@
 #import "WKAppConfig.h"
 #import "WKApp.h"
 #import "WuKongBase.h"
+#import "WKBrandIconHelper.h"
 #import <ZLPhotoBrowser/ZLPhotoBrowser-Swift.h>
 
 
@@ -19,6 +20,9 @@
 
 @property(nonatomic,copy) NSString  *innerLangue;
 @property(nonatomic,copy) NSString *innerReportUrl;
+@property(nonatomic,strong) UIImage *cachedDefaultAvatar;
+@property(nonatomic,assign) WKBrandTheme cachedDefaultAvatarTheme;
+@property(nonatomic,assign) WKSystemStyle cachedDefaultAvatarStyle;
 
 @end
 
@@ -34,12 +38,12 @@
         self.appSchemaPrefix = @"wukong";
         self.clusterOn = YES;
         
-         // ---------- 基础配置（火焰旋风 B · 荧光橙）----------
-        // Brand: fluorescent orange #FF4500 → #FF6B35 (primary #FF4500)
-        self.themeColor = [UIColor colorWithRed:0xFF/255.0f green:0x45/255.0f blue:0x00/255.0f alpha:1.0]; // #FF4500
+         // ---------- 基础配置（石青 · 默认品牌色）----------
+        // Brand: 石青 #0E7490 → #38BDF8
+        self.themeColor = [UIColor colorWithRed:0x0E/255.0f green:0x74/255.0f blue:0x90/255.0f alpha:1.0]; // #0E7490
         self.backgroundColor = [self navBackgroudColorWithAlpha:1.0f];
         self.footerTipFontSize = 12.0f;
-        self.defaultAvatar = [self imageName:@"Common/Index/DefaultAvatar"];
+        // defaultAvatar 由 getter 按主题色动态生成
         self.defaultPlaceholder = [self placeholderImageWithSize:CGSizeMake(114.0f, 114.0f) image:[self imageName:@"Common/Index/Placeholder"]];
         
         self.defaultStickerPlaceholder = [self placeholderImageWithSize:CGSizeMake(114.0f, 114.0f) image:[self imageName:@"Common/Index/Placeholder"]];
@@ -108,6 +112,7 @@
 
 - (void)setStyle:(WKSystemStyle)style {
     _innerStyle = style;
+    self.cachedDefaultAvatar = nil;
     if(style == WKSystemStyleDark) {
         [WKApp shared].loginInfo.extra[@"systemStyle"] = @"dark";
         [[WKApp shared].loginInfo save];
@@ -195,13 +200,28 @@
 - (WKBrandTheme)brandTheme {
     if (!self.innerBrandTheme) {
         NSString *saved = [[NSUserDefaults standardUserDefaults] objectForKey:@"lim_brand_theme"];
-        if ([saved isEqualToString:@"blue"]) {
-            self.innerBrandTheme = @(WKBrandThemeBlue);
+        if ([saved isEqualToString:@"xuanqing"]) {
+            self.innerBrandTheme = @(WKBrandThemeXuanQing);
+        } else if ([saved isEqualToString:@"songyan"]) {
+            self.innerBrandTheme = @(WKBrandThemeSongYan);
+        } else if ([saved isEqualToString:@"wulan"] || [saved isEqualToString:@"blue"]) {
+            self.innerBrandTheme = @(WKBrandThemeWuLan);
         } else {
-            self.innerBrandTheme = @(WKBrandThemeOrange);
+            // shiqing / orange / teal / lanqing / unset → 石青
+            self.innerBrandTheme = @(WKBrandThemeShiQing);
         }
     }
     return (WKBrandTheme)self.innerBrandTheme.unsignedIntegerValue;
+}
+
+- (NSString *)brandThemeStorageKey:(WKBrandTheme)brandTheme {
+    switch (brandTheme) {
+        case WKBrandThemeXuanQing: return @"xuanqing";
+        case WKBrandThemeSongYan: return @"songyan";
+        case WKBrandThemeWuLan: return @"wulan";
+        case WKBrandThemeShiQing:
+        default: return @"shiqing";
+    }
 }
 
 - (void)setBrandTheme:(WKBrandTheme)brandTheme {
@@ -209,7 +229,8 @@
         return;
     }
     self.innerBrandTheme = @(brandTheme);
-    [[NSUserDefaults standardUserDefaults] setObject:(brandTheme == WKBrandThemeBlue ? @"blue" : @"orange")
+    self.cachedDefaultAvatar = nil;
+    [[NSUserDefaults standardUserDefaults] setObject:[self brandThemeStorageKey:brandTheme]
                                               forKey:@"lim_brand_theme"];
     [[NSUserDefaults standardUserDefaults] synchronize];
     [[NSNotificationCenter defaultCenter] postNotificationName:WKNOTIFY_BRAND_THEME_CHANGE object:nil];
@@ -217,35 +238,84 @@
 
 - (NSString *)brandThemeDisplayName {
     switch (self.brandTheme) {
-        case WKBrandThemeBlue:
-            return LLang(@"荧光蓝");
-        case WKBrandThemeOrange:
+        case WKBrandThemeXuanQing:
+            return LLang(@"玄青");
+        case WKBrandThemeSongYan:
+            return LLang(@"松烟");
+        case WKBrandThemeWuLan:
+            return LLang(@"雾蓝");
+        case WKBrandThemeShiQing:
         default:
-            return LLang(@"荧光橙");
+            return LLang(@"石青");
+    }
+}
+
+- (UIColor *)themeColorForBrand:(WKBrandTheme)brand dark:(BOOL)dark {
+    switch (brand) {
+        case WKBrandThemeXuanQing:
+            return dark
+                ? [UIColor colorWithRed:0x5F/255.0f green:0xA8/255.0f blue:0xB8/255.0f alpha:1.0f]  // #5FA8B8
+                : [UIColor colorWithRed:0x1B/255.0f green:0x4D/255.0f blue:0x5C/255.0f alpha:1.0f]; // #1B4D5C
+        case WKBrandThemeSongYan:
+            return dark
+                ? [UIColor colorWithRed:0x4A/255.0f green:0xDE/255.0f blue:0x80/255.0f alpha:1.0f]  // #4ADE80
+                : [UIColor colorWithRed:0x1F/255.0f green:0x7A/255.0f blue:0x4D/255.0f alpha:1.0f]; // #1F7A4D
+        case WKBrandThemeWuLan:
+            return dark
+                ? [UIColor colorWithRed:0x7E/255.0f green:0xB0/255.0f blue:0xD9/255.0f alpha:1.0f]  // #7EB0D9
+                : [UIColor colorWithRed:0x3B/255.0f green:0x6D/255.0f blue:0x9A/255.0f alpha:1.0f]; // #3B6D9A
+        case WKBrandThemeShiQing:
+        default:
+            return dark
+                ? [UIColor colorWithRed:0x38/255.0f green:0xBD/255.0f blue:0xF8/255.0f alpha:1.0f]  // #38BDF8
+                : [UIColor colorWithRed:0x0E/255.0f green:0x74/255.0f blue:0x90/255.0f alpha:1.0f]; // #0E7490
+    }
+}
+
+- (UIColor *)messageSendBubbleColorForBrand:(WKBrandTheme)brand dark:(BOOL)dark {
+    switch (brand) {
+        case WKBrandThemeXuanQing:
+            return dark
+                ? [UIColor colorWithRed:0x12/255.0f green:0x2F/255.0f blue:0x38/255.0f alpha:1.0f]  // #122F38
+                : [UIColor colorWithRed:0xD9/255.0f green:0xE8/255.0f blue:0xEC/255.0f alpha:1.0f]; // #D9E8EC
+        case WKBrandThemeSongYan:
+            return dark
+                ? [UIColor colorWithRed:0x14/255.0f green:0x3D/255.0f blue:0x28/255.0f alpha:1.0f]  // #143D28
+                : [UIColor colorWithRed:0xDD/255.0f green:0xF5/255.0f blue:0xE8/255.0f alpha:1.0f]; // #DDF5E8
+        case WKBrandThemeWuLan:
+            return dark
+                ? [UIColor colorWithRed:0x24/255.0f green:0x3A/255.0f blue:0x52/255.0f alpha:1.0f]  // #243A52
+                : [UIColor colorWithRed:0xE2/255.0f green:0xEC/255.0f blue:0xF5/255.0f alpha:1.0f]; // #E2ECF5
+        case WKBrandThemeShiQing:
+        default:
+            return dark
+                ? [UIColor colorWithRed:0x0C/255.0f green:0x4A/255.0f blue:0x5C/255.0f alpha:1.0f]  // #0C4A5C
+                : [UIColor colorWithRed:0xD0/255.0f green:0xEA/255.0f blue:0xF2/255.0f alpha:1.0f]; // #D0EAF2
     }
 }
 
 - (UIColor *)themeColor {
-    // Brand accent — orange or blue; slightly lighter in dark mode for contrast
     if (@available(iOS 13.0, *)) {
         return [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull traitCollection) {
             BOOL dark = ([traitCollection userInterfaceStyle] == UIUserInterfaceStyleDark || self.style == WKSystemStyleDark);
-            if (self.brandTheme == WKBrandThemeBlue) {
-                if (dark) {
-                    return [UIColor colorWithRed:0x00/255.0f green:0xC6/255.0f blue:0xFF/255.0f alpha:1.0f]; // #00C6FF
-                }
-                return [UIColor colorWithRed:0x00/255.0f green:0x66/255.0f blue:0xFF/255.0f alpha:1.0f]; // #0066FF
-            }
-            if (dark) {
-                return [UIColor colorWithRed:0xFF/255.0f green:0x6B/255.0f blue:0x35/255.0f alpha:1.0f]; // #FF6B35
-            }
-            return [UIColor colorWithRed:0xFF/255.0f green:0x45/255.0f blue:0x00/255.0f alpha:1.0f]; // #FF4500
+            return [self themeColorForBrand:self.brandTheme dark:dark];
         }];
     }
-    if (self.brandTheme == WKBrandThemeBlue) {
-        return [UIColor colorWithRed:0x00/255.0f green:0x66/255.0f blue:0xFF/255.0f alpha:1.0f];
+    return [self themeColorForBrand:self.brandTheme dark:NO] ?: _themeColor;
+}
+
+- (UIImage *)defaultAvatar {
+    WKBrandTheme theme = self.brandTheme;
+    WKSystemStyle style = self.style;
+    if (self.cachedDefaultAvatar &&
+        self.cachedDefaultAvatarTheme == theme &&
+        self.cachedDefaultAvatarStyle == style) {
+        return self.cachedDefaultAvatar;
     }
-    return _themeColor ?: [UIColor colorWithRed:0xFF/255.0f green:0x45/255.0f blue:0x00/255.0f alpha:1.0f];
+    self.cachedDefaultAvatar = [WKBrandIconHelper circleSymbol:@"person.fill" size:96.0f];
+    self.cachedDefaultAvatarTheme = theme;
+    self.cachedDefaultAvatarStyle = style;
+    return self.cachedDefaultAvatar;
 }
 
 // 跟随系统
@@ -361,26 +431,15 @@
 
 
 - (UIColor *)messageSendBubbleColor {
-    // Soft send bubble aligned with current brand theme
     if (@available(iOS 13.0, *)) {
         return [UIColor colorWithDynamicProvider:^UIColor * _Nonnull(UITraitCollection * _Nonnull traitCollection) {
             BOOL dark = ([traitCollection userInterfaceStyle] == UIUserInterfaceStyleDark || self.style == WKSystemStyleDark);
-            if (self.brandTheme == WKBrandThemeBlue) {
-                if (dark) {
-                    return [UIColor colorWithRed:0x1A/255.0f green:0x2F/255.0f blue:0x55/255.0f alpha:1.0f]; // #1A2F55
-                }
-                return [UIColor colorWithRed:0xD6/255.0f green:0xE8/255.0f blue:0xFF/255.0f alpha:1.0f]; // #D6E8FF
-            }
-            if (dark) {
-                return [UIColor colorWithRed:0x55/255.0f green:0x2B/255.0f blue:0x1A/255.0f alpha:1.0f]; // #552B1A
-            }
-            return [UIColor colorWithRed:0xFF/255.0f green:0xE4/255.0f blue:0xD6/255.0f alpha:1.0f]; // #FFE4D6
+            return [self messageSendBubbleColorForBrand:self.brandTheme dark:dark];
         }];
     }
-    if (self.brandTheme == WKBrandThemeBlue) {
-        return [UIColor colorWithRed:0xD6/255.0f green:0xE8/255.0f blue:0xFF/255.0f alpha:1.0f];
-    }
-    return _messageSendBubbleColor ?: [UIColor colorWithRed:0xFF/255.0f green:0xE4/255.0f blue:0xD6/255.0f alpha:1.0f];
+    return [self messageSendBubbleColorForBrand:self.brandTheme dark:NO]
+        ?: _messageSendBubbleColor
+        ?: [UIColor colorWithRed:0xD0/255.0f green:0xEA/255.0f blue:0xF2/255.0f alpha:1.0f];
 }
 
 - (UIColor *)messageSendTextColor {

@@ -1,19 +1,21 @@
 .wk-hermes-card {
   width: 280px;
-  background: var(--wk-color-item, #fff);
-  border-radius: 8px;
-  padding: 12px;
+  background: var(--wk-surface-raised);
+  border: 1px solid var(--wk-border-subtle);
+  border-radius: var(--wk-radius-md);
+  padding: var(--wk-space-3);
   box-sizing: border-box;
 }
 
 body[theme-mode="dark"] .wk-hermes-card {
-  background: var(--wk-color-secondary);
+  background: var(--wk-surface-raised);
+  border-color: var(--wk-border);
 }
 
 .wk-hermes-card-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  color: var(--wk-text-item, #111);
+  color: var(--wk-text-primary);
   line-height: 1.3;
   margin-bottom: 6px;
   word-break: break-word;
@@ -21,7 +23,7 @@ body[theme-mode="dark"] .wk-hermes-card {
 
 .wk-hermes-card-body {
   font-size: 13px;
-  color: var(--wk-text-item, #333);
+  color: var(--wk-text-secondary);
   white-space: pre-wrap;
   word-break: break-word;
   max-height: 120px;
@@ -31,7 +33,7 @@ body[theme-mode="dark"] .wk-hermes-card {
 
 .wk-hermes-card-desc {
   font-size: 12px;
-  color: #999;
+  color: var(--wk-text-tertiary);
   margin-bottom: 8px;
   word-break: break-word;
 }
@@ -44,7 +46,7 @@ body[theme-mode="dark"] .wk-hermes-card {
 
 .wk-hermes-card-btn {
   border: none;
-  border-radius: 6px;
+  border-radius: var(--wk-radius-sm);
   height: 34px;
   font-size: 13px;
   font-weight: 500;
@@ -61,17 +63,17 @@ body[theme-mode="dark"] .wk-hermes-card {
 }
 
 .wk-hermes-card-btn.primary {
-  background: var(--wk-color-theme, #FF4500);
-  color: #fff;
+  background: var(--wk-color-theme);
+  color: var(--wk-text-on-theme);
 }
 
 .wk-hermes-card-btn.secondary {
-  background: rgba(0, 0, 0, 0.06);
-  color: var(--wk-color-theme, #FF4500);
+  background: var(--wk-selected);
+  color: var(--wk-color-theme);
 }
 
 body[theme-mode="dark"] .wk-hermes-card-btn.secondary {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--wk-selected);
 }
 
 .wk-hermes-card-btn.danger {
@@ -85,14 +87,14 @@ body[theme-mode="dark"] .wk-hermes-card-btn.secondary {
 
 .wk-hermes-card-status {
   height: 34px;
-  border-radius: 6px;
+  border-radius: var(--wk-radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 13px;
   font-weight: 500;
-  background: rgba(52, 120, 246, 0.12);
-  color: var(--wk-color-theme, #FF4500);
+  background: var(--wk-selected);
+  color: var(--wk-color-theme);
 }
 
 .wk-hermes-card-status.deny {

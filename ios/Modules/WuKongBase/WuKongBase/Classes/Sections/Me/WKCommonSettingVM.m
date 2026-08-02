@@ -48,7 +48,7 @@
         }else {
             darkDesc = WKApp.shared.config.style == WKSystemStyleDark?LLang(@"打开"):LLang(@"关闭");
         }
-        NSString *themeDesc = [WKApp.shared.config brandThemeDisplayName] ?: LLang(@"荧光橙");
+        NSString *themeDesc = [WKApp.shared.config brandThemeDisplayName] ?: LLang(@"石青");
         return  @{
             @"height":WKSectionHeight,
             @"items":@[

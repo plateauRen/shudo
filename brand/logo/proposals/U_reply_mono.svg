@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Shudo Logo U Mono">
+  <title>Shudo U Mono</title>
+  <path fill="#0E7490" d="M92 120h328c36 0 64 28 64 64v168c0 36-28 64-64 64H240l-52 50c-10 10-26 2-26-12v-38H92c-36 0-64-28-64-64V184c0-36 28-64 64-64z"/>
+  <rect x="148" y="188" width="216" height="36" rx="12" fill="#ffffff" opacity="0.35"/>
+  <rect x="148" y="244" width="168" height="36" rx="12" fill="#ffffff" opacity="0.55"/>
+  <path fill="#ffffff" d="M148 300h180c14 0 26 12 26 26v8c0 14-12 26-26 26h-92l-28 24c-6 5-16 1-16-7v-17h-44c-14 0-26-12-26-26v-8c0-14 12-26 26-26z"/>
+</svg>

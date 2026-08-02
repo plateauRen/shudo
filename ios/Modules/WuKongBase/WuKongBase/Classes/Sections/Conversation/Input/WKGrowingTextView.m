@@ -126,7 +126,8 @@
 //        _internalTextView.returnKeyType = UIReturnKeySend;
         if ([WKCommon iosMajorVersion]>= 7) {
             _internalTextView.textContainer.layoutManager.allowsNonContiguousLayout = true;
-            _internalTextView.allowsEditingTextAttributes = false;
+            // 必须为 YES，否则 attributedText 里的 @人名颜色会被系统丢掉
+            _internalTextView.allowsEditingTextAttributes = YES;
         }
         //        [_internalTextView setBackgroundColor:[UIColor blueColor]];
     }

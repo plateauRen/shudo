@@ -14,7 +14,7 @@ UIColor *CWSelectBackgroundColor(void) {
     if (theme) {
         return theme;
     }
-    return UIColorFromRGBA(255, 69, 0, 1.0); // #FF4500 fallback
+    return UIColorFromRGBA(14, 116, 144, 1.0); // #0E7490 石青 fallback
 }
 
 @implementation UIView (CWChat)

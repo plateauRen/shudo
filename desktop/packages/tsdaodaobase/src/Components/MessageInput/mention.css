@@ -47,12 +47,10 @@
   }
   
   .mentions__mention {
-    position: relative;
-    z-index: 1;
-    color: var(--wk-color-theme);
-    text-shadow: none;
-    /* text-shadow: 1px 1px 1px white, 1px -1px 1px white, -1px 1px 1px white,
-      -1px -1px 1px white; */
-    /* text-decoration: underline; */
-    pointer-events: none;
+      position: relative;
+      z-index: 1;
+      color: var(--wk-color-theme);
+      font-weight: normal !important;
+      text-shadow: none;
+      pointer-events: none;
   }

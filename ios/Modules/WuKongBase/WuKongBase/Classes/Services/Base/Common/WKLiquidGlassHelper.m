@@ -160,4 +160,31 @@
     }
 }
 
++ (void)applyGlassListStyleToTableView:(UITableView *)tableView {
+    if (!tableView) return;
+    tableView.backgroundColor = [UIColor clearColor];
+    tableView.backgroundView = nil;
+    if (@available(iOS 15.0, *)) {
+        tableView.sectionHeaderTopPadding = 0;
+    }
+    if ([self isLiquidGlassAvailable]) {
+        tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+    }
+}
+
++ (void)applyGlassCellBackground:(UITableViewCell *)cell {
+    if (!cell || ![self isLiquidGlassAvailable]) {
+        return;
+    }
+    cell.backgroundColor = [UIColor clearColor];
+    UIColor *fill = [[UIColor secondarySystemGroupedBackgroundColor] colorWithAlphaComponent:0.55];
+    if (@available(iOS 14.0, *)) {
+        UIBackgroundConfiguration *cfg = [UIBackgroundConfiguration listGroupedCellConfiguration];
+        cfg.backgroundColor = fill;
+        cell.backgroundConfiguration = cfg;
+    } else {
+        cell.contentView.backgroundColor = fill;
+    }
+}
+
 @end

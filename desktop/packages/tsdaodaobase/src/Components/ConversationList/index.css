@@ -1,57 +1,69 @@
-
 .wk-conversationlist {
     height: 100%;
     overflow-y: auto;
-    /* padding: 0px 5px; */
+    padding: var(--wk-space-1) var(--wk-space-2) var(--wk-space-3);
+    background: var(--wk-surface-panel);
 }
 
 .wk-conversationlist-item {
-    height: 80px;
+    height: 68px;
     width: 100%;
     cursor: pointer;
-    padding: 0px 5px;
-    background-color: white;
+    padding: 0;
+    background-color: transparent;
     box-sizing: border-box;
+    border-radius: var(--wk-radius-md);
+    margin-bottom: 2px;
+    transition: background-color var(--wk-layer-transition);
+}
+
+.wk-conversationlist-item:hover {
+    background-color: var(--wk-hover);
 }
 
 body[theme-mode=dark] .wk-conversationlist-item  {
-    background-color: var(--wk-color-secondary-2);
+    background-color: transparent;
+}
+
+body[theme-mode=dark] .wk-conversationlist-item:hover {
+    background-color: var(--wk-hover);
 }
 
 .wk-conversationlist-item-top {
-    background-color: var(--wk-color-secondary) !important;
+    background-color: var(--wk-surface-sunken) !important;
 }
 
 .wk-conversationlist-item-content {
     display: flex;
     height: 100%;
+    border-radius: var(--wk-radius-md);
+    padding: 0 var(--wk-space-1);
 }
 
 .wk-conversationlist-item-left {
-    width: 70px;
+    width: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .wk-conversationlist-item-right {
     height: 100%;
-    width: calc(100% - 70px);
+    width: calc(100% - 56px);
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding-right: 10px;
-    padding-left: 5px;
-
+    padding-right: var(--wk-space-3);
+    padding-left: var(--wk-space-1);
     flex-grow: 1;
     overflow: hidden;
     box-sizing: border-box;
 }
 
 .wk-conversationlist-item-avatar-box {
-    margin-left: 4px;
+    margin-left: 0;
     position: relative;
-   
 }
 
 .wk-conversationlist-item-right-first-line {
@@ -63,41 +75,45 @@ body[theme-mode=dark] .wk-conversationlist-item  {
 
 .wk-conversationlist-item-right-second-line {
     display: flex;
+    align-items: center;
+    margin-top: 2px;
 }
 
 .wk-conversationlist-item-name {
     display: flex;
-    width: 100%; 
+    width: 100%;
     flex: 1;
     align-items: center;
-
-   
+    min-width: 0;
 }
 
 .wk-conversationlist-item-name h3 {
-    font-size: 1rem;
-    line-height: 1.6875rem;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.35;
     margin: 0;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
     width: auto;
     max-width: 80%;
+    color: var(--wk-text-primary);
 }
 
 body[theme-mode=dark] .wk-conversationlist-item-name h3 {
-    color: white;
+    color: var(--wk-text-primary);
 }
 
-.wk-conversationlist-item-selected .wk-conversationlist-item-name h3,.wk-conversationlist-item-selected .wk-conversationlist-item-name  {
-    color: white;
+.wk-conversationlist-item-selected .wk-conversationlist-item-name h3,
+.wk-conversationlist-item-selected .wk-conversationlist-item-name {
+    color: var(--wk-text-primary);
 }
 
 .wk-conversationlist-item-time {
-    color: #9b9b9b;
-    padding-left: 10px;
+    color: var(--wk-text-tertiary);
+    padding-left: var(--wk-space-2);
     flex-shrink: 0;
-    font-size: .75rem;
+    font-size: 12px;
     line-height: 1;
     display: flex;
     align-items: center;
@@ -105,64 +121,64 @@ body[theme-mode=dark] .wk-conversationlist-item-name h3 {
 }
 
 .wk-conversationlist-item-selected .wk-conversationlist-item-time {
-    color: white;
-   
+    color: var(--wk-text-tertiary);
 }
-
 
 .wk-conversationlist-item-lastmsg {
     width: 100%;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: var(--wk-color-font-tip);
+    color: var(--wk-text-tertiary);
     overflow: hidden;
-    font-size: 14px;
-    min-height: 22px;
+    font-size: 13px;
+    min-height: 20px;
+    line-height: 20px;
 }
 
 .wk-conversationlist-item-selected .wk-conversationlist-item-lastmsg {
-    color: white;
+    color: var(--wk-text-secondary);
 }
 
+/* Soft selected — not full brand fill */
 .wk-conversationlist-item-selected {
-    background-color: var(--wk-color-theme);
-    border-radius: 10px;
+    background-color: var(--wk-selected-strong);
+    border-radius: var(--wk-radius-md);
 }
 
 .wk-mention {
-    color: red;
+    color: var(--wk-color-theme);
 }
 
 .wk-reminder {
-    color: red;
+    color: var(--wk-color-theme);
 }
 
 .wk-onlinestatusbadge {
-    background-color: var(--wk-color-item);
+    background-color: var(--wk-surface-raised);
     position: absolute;
     padding: 1.5px;
     transform: scale(0.6);
     right: -10px;
     bottom: -5px;
     border-radius: 10px;
-
 }
+
 .wk-onlinestatusbadge-empty.wk-onlinestatusbadge {
     border-radius: 50%;
     right: -1px;
     bottom: -1px;
-} 
+}
 
 .wk-onlinestatusbadge-content {
     background-color: rgb(238, 249, 233);
     padding: 0px 5px;
     border-radius: 10px;
 }
+
 .wk-onlinestatusbadge-content-tip {
     padding: 0px;
     font-size: 14px;
     color: rgb(124, 208, 83);
-    
 }
 
 .wk-onlinestatusbadge-empty  .wk-onlinestatusbadge-content {

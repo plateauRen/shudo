@@ -13,7 +13,9 @@ export function rehydrateHermesMessage(message: Message): void {
   // Already typed
   if (
     message.contentType === MessageContentTypeConst.hermesCard ||
-    message.contentType === MessageContentTypeConst.hermesAction
+    message.contentType === MessageContentTypeConst.hermesAction ||
+    message.contentType === MessageContentTypeConst.hermesTable ||
+    message.contentType === MessageContentTypeConst.hermesAudio
   ) {
     return;
   }

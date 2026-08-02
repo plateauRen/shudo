@@ -20,19 +20,29 @@
 
 .wk-message-text-richmention {
     cursor: pointer;
+    color: var(--wk-color-theme, #0E7490) !important;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.wk-message-text-richmention:hover {
     text-decoration: underline;
 }
 
+body[theme-mode=dark] .wk-message-text-richmention {
+    color: var(--wk-color-theme, #38BDF8) !important;
+}
+
 .wk-message-text-send {
-    color: var(--wk-color-message-send-text, #1F2329);
+    color: var(--wk-color-message-send-text);
 }
 
 .wk-message-text-recv {
-    color: black;
+    color: var(--wk-message-color);
 }
 
 body[theme-mode=dark] .wk-message-text-recv {
-    color: white;
+    color: var(--wk-message-color);
 }
 
 .wk-message-text-richemoji {
@@ -90,7 +100,7 @@ body[theme-mode=dark] .wk-message-text-recv {
 }
 
 .wk-message-text-html a {
-    color: var(--wk-color-theme, #FF4500);
+    color: var(--wk-color-theme, #0E7490);
     text-decoration: underline;
 }
 
@@ -151,4 +161,36 @@ body[theme-mode="dark"] .wk-message-text-html td {
     text-align: initial;
     display: flow-root;
     unicode-bidi: plaintext;
+}
+
+.wk-message-text-translate {
+    margin-top: 6px;
+}
+
+.wk-message-text-translate-split {
+    height: 1px;
+    background: rgba(0, 0, 0, 0.08);
+    margin-bottom: 4px;
+}
+
+body[theme-mode="dark"] .wk-message-text-translate-split {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.wk-message-text-translate-body {
+    font-size: 13px;
+    line-height: 1.35;
+    color: var(--wk-text-secondary);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+body[theme-mode="dark"] .wk-message-text-translate-body {
+    color: var(--wk-text-secondary);
+}
+
+.wk-message-text-translate-loading {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--wk-text-tertiary);
 }

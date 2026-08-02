@@ -1,14 +1,13 @@
-
-
 :root {
-    --wk-height-viewqueueheader: 50px;
+    --wk-height-viewqueueheader: 52px;
 }
 
 .wk-viewqueueheader {
-    background-color: var(--wk-color-secondary);
+    background-color: var(--wk-surface-panel);
     height: var(--wk-height-viewqueueheader);
     width: 100%;
     position: relative;
+    border-bottom: 1px solid var(--wk-border-subtle);
 }
 
 .wk-viewqueueheader-content {
@@ -20,16 +19,17 @@
 }
 
 .wk-viewqueueheader-content-title {
-    font-size: 17px;
-    font-weight: 500;
+    font-size: 15px;
+    font-weight: 600;
     max-width: 200px;
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
+    color: var(--wk-text-primary);
 }
 
 body[theme-mode=dark] .wk-viewqueueheader-content-title {
-    color: white;
+    color: var(--wk-text-primary);
 }
 
 .wk-viewqueueheader-back {
@@ -38,7 +38,12 @@ body[theme-mode=dark] .wk-viewqueueheader-content-title {
     display: flex;
     align-items: center;
     cursor: pointer;
-    padding: 0px 15px;
+    padding: 0 var(--wk-space-4);
+    border-radius: var(--wk-radius-sm);
+}
+
+.wk-viewqueueheader-back:hover {
+    background: var(--wk-hover);
 }
 
 .wk-viewqueueheader-back img {

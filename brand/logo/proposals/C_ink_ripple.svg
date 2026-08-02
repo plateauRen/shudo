@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>叙叨 · 方案 C · 星叙</title>
+  <defs>
+    <linearGradient id="c" x1="256" y1="20" x2="256" y2="492" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B6D9A"/><stop offset="100%" stop-color="#0E7490"/>
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="256" fill="url(#c)"/>
+  <circle cx="256" cy="256" r="132" fill="none" stroke="#fff" stroke-width="14" opacity="0.28" stroke-dasharray="18 22"/>
+  <circle cx="180" cy="210" r="28" fill="#fff" opacity="0.55"/>
+  <circle cx="320" cy="190" r="36" fill="#fff"/>
+  <circle cx="270" cy="320" r="44" fill="#fff" opacity="0.85"/>
+  <path d="M198 224 L292 206 L282 288" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" opacity="0.35"/>
+</svg>

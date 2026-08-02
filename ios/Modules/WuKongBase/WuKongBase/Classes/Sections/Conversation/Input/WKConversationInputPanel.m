@@ -30,9 +30,14 @@
 #define  WKiPhoneX (WKScreenWidth == 375.f && WKScreenHeight == 812.f ? YES : NO)
 
 #define WKConversationInputHeight 36.0f // 输入框高度
-#define WKConversationFuncGroupViewHeight 50.0f // 输入框下面的功能组的视图高度
+#define WKConversationFuncGroupViewHeight 40.0f // 底部工具条高度
+#define WKInputShellVPad 6.0f
+#define WKInputShellHPad 10.0f
+#define WKInputOuterPad 10.0f
+#define WKSendButtonSide 32.0f
 
 @interface WKConversationInputPanel()<WKGrowingTextViewDelegate>{
+    BOOL _refreshingMentionStyle;
     //    CGFloat _inputPanelBorder;
     BOOL _noFollowKeyboradHeight; // 不追随键盘高度
 }
@@ -60,9 +65,11 @@
 
 
 
+@property(nonatomic,strong) UIView *inputShellView; // 圆角输入框
 @property(nonatomic,strong) WKSendButton *sendButton;
 
 @property(nonatomic,assign) BOOL mentionStart; // 是否开始@
+- (void)refreshMentionHighlightInInput;
 
 @property(nonatomic,strong) NSArray<UIView*> *textViewRights;
 
@@ -110,7 +117,7 @@
     }
     
     
-    _contentViewMinHeight = WKConversationInputHeight + WKConversationFuncGroupViewHeight +10.0f;
+    _contentViewMinHeight = WKInputOuterPad + (WKConversationInputHeight + WKInputShellVPad * 2.0f) + 2.0f + WKConversationFuncGroupViewHeight + 4.0f;
     
     [self addSubview:self.contentView];
     
@@ -160,16 +167,14 @@
     [self addSubview:self.conversationPanel];
     
     [self.messageToolBar addSubview:self.menusBtn];
-    [self.messageToolBar addSubview:self.sendButton];
-    
-    [self.messageToolBar addSubview:self.textView];
+    [self.messageToolBar addSubview:self.plusButton];
+    [self.messageToolBar addSubview:self.inputShellView];
+    [self.inputShellView addSubview:self.textView];
     [self.messageToolBar addSubview:self.funcGroupView];
-    
+    [self.messageToolBar addSubview:self.sendButton];
     
     [self reloadInputPanelFrame];
     [self layoutContentView];
-    
-    
 }
 // 添加和布局文本框右边视图
 -(void) updateAndLayoutTextViewRightView {
@@ -259,33 +264,36 @@ CGFloat itemSpace = 10.0f;
         if ([WKLiquidGlassHelper isLiquidGlassAvailable]) {
             self.layer.shadowOpacity = 0.0f;
         }
-        if ([WKApp shared].config.style == WKSystemStyleDark) {
-            [self.textView setBackgroundColor:[UIColor colorWithWhite:1.0 alpha:0.08]];
-        } else {
-            [self.textView setBackgroundColor:[UIColor colorWithWhite:1.0 alpha:0.55]];
-        }
+        [self.textView setBackgroundColor:[UIColor clearColor]];
+        [self styleInputShell];
     } else {
         [self.messageToolBar setBackgroundColor:[WKApp shared].config.cellBackgroundColor];
         [self setBackgroundColor:[WKApp shared].config.cellBackgroundColor];
         [self.conversationPanel setBackgroundColor:[WKApp shared].config.cellBackgroundColor];
         if([WKApp shared].config.style == WKSystemStyleDark) {
             self.layer.shadowColor = [UIColor colorWithRed:15.0f/255.0f green:15.0f/255.0f blue:15.0f/255.0f alpha:1.0].CGColor;
-            [self.textView setBackgroundColor:[UIColor colorWithRed:38.0f/255.0f green:38.0f/255.0f blue:38.0f/255.0f alpha:1.0]];
         }else{
             self.layer.shadowColor = [UIColor colorWithRed:240.0f/255.0f green:240.0f/255.0f blue:240.0f/255.0f alpha:1.0].CGColor;
-            [self.textView setBackgroundColor:[UIColor colorWithRed:246.0f/255.0f green:246.0f/255.0f blue:246.0f/255.0f alpha:1.0]];
         }
+        [self.textView setBackgroundColor:[UIColor clearColor]];
+        [self styleInputShell];
     }
+}
+
+-(void) styleInputShell {
+    BOOL dark = [WKApp shared].config.style == WKSystemStyleDark;
+    self.inputShellView.backgroundColor = dark
+        ? [UIColor colorWithWhite:1.0 alpha:0.06]
+        : [UIColor colorWithWhite:1.0 alpha:0.92];
+    self.inputShellView.layer.borderColor = (dark
+        ? [UIColor colorWithWhite:1.0 alpha:0.14]
+        : [UIColor colorWithWhite:0.0 alpha:0.12]).CGColor;
 }
 -(void) layoutContentView{
     
-//    UIEdgeInsets inputFieldInsets = [self inputFieldInsets];
-    // messageToolBar
     CGFloat contentHeight = self.currentContentHeight;
+    CGFloat leftSpace = WKInputOuterPad;
     
-    CGFloat leftSpace = 10.0f;
-    
-    // messageToolBar
     self.contentView.lim_width = self.lim_width;
     self.contentView.lim_height = contentHeight;
     
@@ -296,74 +304,63 @@ CGFloat itemSpace = 10.0f;
         self.messageToolBar.lim_top = 0.0f;
     }
     
-    
-    
     if(self.showMenusBtn) {
         self.menusBtn.lim_left = leftSpace;
     }
     
-    // textView
-    self.textView.lim_top = 10.0f;
-    CGFloat textViewWidth = 0.0f;
+    // Input shell: text only
+    CGFloat shellLeft = leftSpace;
     if(self.showMenusBtn) {
-        self.textView.lim_left = self.menusBtn.lim_right + 10.0f;
-        textViewWidth = self.lim_width - self.menusBtn.lim_right - 20.0f;
-    }else{
-        self.textView.lim_left = 10.0f;
-        textViewWidth  =self.lim_width - 20.0f;
+        shellLeft = self.menusBtn.lim_right + 8.0f;
     }
+    CGFloat shellRightPad = WKInputOuterPad;
+    CGFloat shellWidth = self.lim_width - shellLeft - shellRightPad;
+    CGFloat shellHeight = self.currentInputHeight + WKInputShellVPad * 2.0f;
     
-    [self.sendButton layoutSubviews];
-    CGFloat sendLeftSpace = 10.0f;
-    if(self.sendButton.show) {
-        
-        textViewWidth -= (self.sendButton.lim_width+sendLeftSpace);
-    }
+    self.inputShellView.lim_left = shellLeft;
+    self.inputShellView.lim_top = WKInputOuterPad;
+    self.inputShellView.lim_width = shellWidth;
+    self.inputShellView.lim_height = shellHeight;
     
-    self.textView.lim_width = textViewWidth;
-    
+    self.textView.lim_left = WKInputShellHPad;
+    self.textView.lim_width = MAX(80.0f, shellWidth - WKInputShellHPad * 2.0f);
     self.textView.lim_height = self.currentInputHeight;
-    self.textView.lim_top = 10.0f;
+    self.textView.lim_top = WKInputShellVPad;
     
     if(self.showMenusBtn) {
-        self.menusBtn.lim_top = self.textView.lim_top + ( self.textView.lim_height/2.0f - self.menusBtn.lim_height/2.0f);
+        self.menusBtn.lim_top = self.inputShellView.lim_top + (shellHeight / 2.0f - self.menusBtn.lim_height / 2.0f);
     }
     
-    self.sendButton.lim_top = self.textView.lim_bottom - self.sendButton.lim_height;
-    self.sendButton.lim_left = self.textView.lim_right + sendLeftSpace;
-   
-   
-
-    self.funcGroupView.lim_top = self.textView.lim_bottom;
+    // Bottom toolbar: [emoji mic image …] ........ [send]
+    CGFloat toolsTop;
     if(self.funcGroupView.startScroll) {
-        self.funcGroupView.lim_top = self.textView.lim_bottom - (self.funcGroupView.lim_height - WKConversationFuncGroupViewHeight);
-    }else {
-        self.funcGroupView.lim_top = self.textView.lim_bottom;
+        toolsTop = self.inputShellView.lim_bottom + 2.0f - (self.funcGroupView.lim_height - WKConversationFuncGroupViewHeight);
+    } else {
+        toolsTop = self.inputShellView.lim_bottom + 2.0f;
     }
+    CGFloat sendRightPad = WKInputOuterPad;
+    CGFloat sendW = WKSendButtonSide;
+    self.sendButton.lim_width = sendW;
+    self.sendButton.lim_height = sendW;
+    self.sendButton.lim_left = self.lim_width - sendRightPad - sendW;
+    self.sendButton.lim_top = toolsTop + (WKConversationFuncGroupViewHeight - sendW) / 2.0f;
+    
+    if(!self.plusButton.hidden) {
+        self.plusButton.lim_left = self.sendButton.lim_left - self.plusButton.lim_width - 6.0f;
+        self.plusButton.lim_top = self.sendButton.lim_top + (sendW - self.plusButton.lim_height) / 2.0f;
+    }
+    
+    self.funcGroupView.lim_top = toolsTop;
     self.funcGroupView.lim_left = 0;
-//    // funcGroupView
-//    CGFloat funcLeftSpace = 10.0f;
-//    CGFloat funcRightSpace = 10.0f;
-//    self.funcGroupView.lim_height = WKConversationFuncGroupViewHeight;
-//    self.funcGroupView.lim_top = self.textView.lim_bottom;
-//    self.funcGroupView.lim_left = funcLeftSpace;
-//    self.funcGroupView.lim_width = self.lim_width - funcLeftSpace - funcRightSpace;
-//
-//    CGFloat itemLeftSpace =  (self.funcGroupView.lim_width - itemWidth*self.funcGroupView.subviews.count) / (self.funcGroupView.subviews.count-1);
-//    for (NSInteger i = 0;i<self.funcGroupView.subviews.count;i++) {
-//        UIView *subView = self.funcGroupView.subviews[i];
-//        if(i==0) {
-//             subView.lim_left =0;
-//        }else {
-//            subView.lim_left = self.funcGroupView.subviews[i-1].lim_right+itemLeftSpace;
-//        }
-//
-//        subView.lim_top =  self.funcGroupView.lim_height/2.0f - subView.lim_height/2.0f;
-//    }
+    CGFloat funcRight = self.sendButton.lim_left;
+    if(!self.plusButton.hidden) {
+        funcRight = self.plusButton.lim_left;
+    }
+    self.funcGroupView.lim_width = MAX(0, funcRight - 4.0f);
     
     self.conversationPanel.lim_top = self.contentView.lim_bottom;
-    
 }
+
 - (UIEdgeInsets)inputFieldInsets
 {
     static UIEdgeInsets insets;
@@ -425,10 +422,32 @@ CGFloat itemSpace = 10.0f;
     return _menusBtn;
 }
 
+- (UIButton *)plusButton {
+    if(!_plusButton) {
+        _plusButton = [[UIButton alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 28.0f, 28.0f)];
+        _plusButton.hidden = YES;
+        [_plusButton setTitle:@"⋯" forState:UIControlStateNormal];
+        _plusButton.titleLabel.font = [UIFont systemFontOfSize:17.0f weight:UIFontWeightMedium];
+        [_plusButton setTitleColor:[WKApp shared].config.themeColor forState:UIControlStateNormal];
+        _plusButton.layer.cornerRadius = 6.0f;
+        _plusButton.layer.masksToBounds = YES;
+    }
+    return _plusButton;
+}
+
+- (void)setShowPlusButton:(BOOL)show {
+    self.plusButton.hidden = !show;
+    [self layoutSubviews];
+}
+
+- (BOOL)showPlusButton {
+    return !self.plusButton.hidden;
+}
+
 - (WKSendButton *)sendButton {
     if(!_sendButton) {
-        CGSize size = CGSizeMake(32.0f, 32.0f);
-        _sendButton = [[WKSendButton alloc] initWithFrame:CGRectMake(self.messageToolBar.lim_width, 0.0f, size.width, size.height)];
+        CGSize size = CGSizeMake(WKSendButtonSide, WKSendButtonSide);
+        _sendButton = [[WKSendButton alloc] initWithFrame:CGRectMake(0.0f, 0.0f, size.width, size.height)];
         __weak typeof(self) weakSelf = self;
         [_sendButton setOnSend:^{
             [weakSelf inputSendFinished];
@@ -444,19 +463,26 @@ CGFloat itemSpace = 10.0f;
     [self layoutSubviews];
 }
 
+-(UIView *)inputShellView {
+    if (!_inputShellView) {
+        _inputShellView = [[UIView alloc] init];
+        _inputShellView.layer.masksToBounds = YES;
+        _inputShellView.layer.cornerRadius = 10.0f;
+        _inputShellView.layer.borderWidth = 1.0f / UIScreen.mainScreen.scale;
+    }
+    return _inputShellView;
+}
+
 -(WKGrowingTextView*) textView {
     if(!_textView) {
         _textView = [[WKGrowingTextView alloc] init];
         _textView.lim_height =WKConversationInputHeight;
-        
-        
         _textView.layer.masksToBounds = YES;
-        _textView.layer.cornerRadius = 15.0f;
-//        _textView.layer.borderWidth = 0.5;
-//        _textView.layer.borderColor = [UIColor lightGrayColor].CGColor;
+        _textView.layer.cornerRadius = 0;
         _textView.tag = 99;
-
         _textView.delegate = self;
+        _textView.backgroundColor = [UIColor clearColor];
+        _textView.internalTextView.returnKeyType = UIReturnKeyDefault;
     }
     return _textView;
 }
@@ -545,13 +571,15 @@ CGFloat itemSpace = 10.0f;
     return [self currentPanelHeight]+[self currentContentHeight]-[self bottomAdjustOffset];
 }
 
-// 当前消息栏高度
+// 当前消息栏高度：圆角输入框 + 下方工具条（含发送）
 -(CGFloat) currentContentHeight{
     CGFloat topViewBottom = 0.0f;
     if(self.topView) {
         topViewBottom = self.topView.lim_bottom;
     }
-    CGFloat height = MAX(self.currentInputHeight + WKConversationFuncGroupViewHeight +10.0f,_contentViewMinHeight);
+    CGFloat shellH = self.currentInputHeight + WKInputShellVPad * 2.0f;
+    CGFloat height = WKInputOuterPad + shellH + 2.0f + WKConversationFuncGroupViewHeight + 4.0f;
+    height = MAX(height, _contentViewMinHeight);
     return height+topViewBottom;
 }
 // 当前面板的高度
@@ -736,22 +764,9 @@ CGFloat itemSpace = 10.0f;
 
 #pragma mark - UITextViewDelegate
 - (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text{
-//    if ([text isEqualToString:@"\n"]) {
-//        NSString *content = textView.text;
-//        if([WKApp shared].config.messageTextMaxBytes !=0) {
-//            if(content && [self convertToByte:content]>[WKApp shared].config.messageTextMaxBytes) {
-//                [[WKNavigationManager shared].topViewController.view showHUDWithHide:LLang(@"发送的内容太长！")];
-//                return NO;
-//            }
-//        }
-//
-//        textView.text = @"";
-//        [self resetInputHeight];
-//        if(self.delegate && [self.delegate respondsToSelector:@selector(inputPanelSend:text:)]) {
-//            [self.delegate inputPanelSend:self text:content];
-//        }
-//        return NO;
-//    }else
+    if ([text isEqualToString:@"\n"]) {
+        return YES; // 移动端回车换行，点击发送按钮发送
+    }
     if ([self isMention:text]) { // @功能
         [self triggerMentionStartIfNeed];
         
@@ -811,6 +826,7 @@ CGFloat itemSpace = 10.0f;
 }
 
 - (void)textViewDidChange:(UITextView *)textView {
+    if (_refreshingMentionStyle) return;
     [self handleTextViewContentDidChange];
    
 }
@@ -823,6 +839,7 @@ CGFloat itemSpace = 10.0f;
         self.sendButton.show = true;
     }
     [self animateInputPanelChange];
+    [self refreshMentionHighlightInInput];
     
     if(self.delegate && [self.delegate respondsToSelector:@selector(inputPanelTyping:)]) {
         [self.delegate inputPanelTyping:self];
@@ -850,6 +867,61 @@ CGFloat itemSpace = 10.0f;
     }
     
     
+}
+
+/// 输入框内 @人名 主题色标注（与气泡消息一致）
+- (void)refreshMentionHighlightInInput {
+    if (_refreshingMentionStyle) return;
+    UITextView *tv = self.textView.internalTextView;
+    if (!tv) return;
+    NSString *text = tv.text ?: @"";
+    UIFont *font = tv.font ?: [UIFont systemFontOfSize:16];
+    UIColor *normalColor = [WKApp shared].config.defaultTextColor;
+    if (!normalColor) {
+        if (@available(iOS 13.0, *)) {
+            normalColor = [UIColor labelColor];
+        } else {
+            normalColor = [UIColor blackColor];
+        }
+    }
+    UIColor *mentionColor = [WKApp shared].config.themeColor ?: [UIColor systemBlueColor];
+    UIFont *mentionFont = [UIFont systemFontOfSize:font.pointSize weight:UIFontWeightSemibold] ?: font;
+
+    NSDictionary *baseAttrs = @{
+        NSFontAttributeName: font,
+        NSForegroundColorAttributeName: normalColor,
+    };
+    NSMutableAttributedString *attr = [[NSMutableAttributedString alloc] initWithString:text attributes:baseAttrs];
+    if (text.length > 0) {
+        // \S 不含结束符 \u2004，正好只高亮 @Hermes
+        NSError *reErr = nil;
+        NSRegularExpression *re =
+            [NSRegularExpression regularExpressionWithPattern:@"@\\S+" options:0 error:&reErr];
+        if (re && !reErr) {
+            [re enumerateMatchesInString:text
+                                 options:0
+                                   range:NSMakeRange(0, text.length)
+                              usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop) {
+                if (!result || result.range.location == NSNotFound) return;
+                [attr addAttributes:@{
+                    NSForegroundColorAttributeName: mentionColor,
+                    NSFontAttributeName: mentionFont,
+                } range:result.range];
+            }];
+        }
+    }
+
+    NSRange selected = tv.selectedRange;
+    _refreshingMentionStyle = YES;
+    tv.allowsEditingTextAttributes = YES;
+    // 清掉 textColor，避免覆盖 attributedText 的分片颜色
+    tv.textColor = nil;
+    tv.attributedText = attr;
+    tv.typingAttributes = baseAttrs;
+    if (selected.location != NSNotFound && NSMaxRange(selected) <= attr.length) {
+        tv.selectedRange = selected;
+    }
+    _refreshingMentionStyle = NO;
 }
 
 // 是否提及

@@ -50,6 +50,9 @@ typedef enum : NSUInteger {
 /// 返回点击
 @property(nonatomic,strong) void(^onBack)(void);
 
+/// Place title on the leading edge and `searchBar` between title and rightView (shared by chat/contacts tabs).
+- (void)layoutLeadingTitleWithInlineSearchBar:(UIView *)searchBar;
+
 @end
 
 NS_ASSUME_NONNULL_END

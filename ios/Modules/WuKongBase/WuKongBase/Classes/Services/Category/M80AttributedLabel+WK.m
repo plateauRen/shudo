@@ -9,6 +9,7 @@
 #import "M80AttributedLabel+WK.h"
 #import "WKEmoticonService.h"
 #import "WKMentionService.h"
+#import "WKApp.h"
 
 
 @implementation M80AttributedLabel (WK)
@@ -19,8 +20,8 @@
     if(!text || [text isEqualToString:@""]) {
         return;
     }
-    
-       
+
+    UIColor *mentionColor = [WKApp shared].config.themeColor ?: [UIColor systemBlueColor];
     NSArray<id<WKMatchToken>> *tokens = [ [WKEmoticonService shared] parseEmotion:text];
     for(id<WKMatchToken> token in tokens){
            if (token.type == WKatchTokenTypeEmoji){
@@ -30,28 +31,22 @@
                    [self appendImage:image maxSize:CGSizeMake(24.0f, 24.0f)];
                }
            }else{
-               if(mentionInfo) {
-                   NSString *text = token.text;
-                   NSArray<id<WKMatchToken>> *mentions = [[WKMentionService shared] parseMention:text mentionInfo:mentionInfo];
-                   if(mentions && mentions.count>0) {
-                       for(id<WKMatchToken> token in mentions) {
-                           if(token.type == WKatchTokenTypeMetion) {
-                               WKMetionToken *mentionToken = (WKMetionToken*)token;
-                                if(mentionToken.index < mentionInfo.uids.count) {
-                                    [self addCustomLink:mentionToken forRange:mentionToken.range linkColor:[UIColor colorWithRed:86.0/255.0f green:169.0f/255.0f blue:60.0f/255.0f alpha:1.0f]];
-                                }
-                               [self appendText:mentionToken.text];
-                               
-                           }else{
-                               [self appendText:token.text];
-                           }
+               NSString *partText = token.text;
+               NSArray<id<WKMatchToken>> *mentions = [[WKMentionService shared] parseMention:partText mentionInfo:mentionInfo];
+               if(mentions && mentions.count>0) {
+                   for(id<WKMatchToken> mtoken in mentions) {
+                       if(mtoken.type == WKatchTokenTypeMetion) {
+                           WKMetionToken *mentionToken = (WKMetionToken*)mtoken;
+                           NSRange range = NSMakeRange(self.attributedText.length, mentionToken.text.length);
+                           [self appendText:mentionToken.text];
+                           [self addCustomLink:mentionToken forRange:range linkColor:mentionColor];
+                       }else{
+                           [self appendText:mtoken.text];
                        }
                    }
-               }else {
-                    [self appendText:token.text];
+               } else {
+                    [self appendText:partText];
                }
-               
-               
            }
        }
 }

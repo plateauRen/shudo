@@ -14,8 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic,assign) BOOL showNetworkError; // 是否显示网络错误
 
-@property(nonatomic,assign) BOOL showPCOnline; // 是否显示PC在线
-@property(nonatomic,assign) WKDeviceFlagEnum pcDeviceFlag; // 在线设备标记
+/// 兼容旧调用；UI 已迁至会话列表导航栏左上角，不再渲染列表横幅
+@property(nonatomic,assign) BOOL showPCOnline;
+@property(nonatomic,assign) WKDeviceFlagEnum pcDeviceFlag;
 
 @property(nonatomic,strong) UIView *tableHeaderBottomEmptyView;
 

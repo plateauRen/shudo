@@ -10,6 +10,7 @@
 #import "WKSearchbarView.h"
 #import "WKGlobalSearchResultController.h"
 #import "WKPCOnlineVC.h"
+#import "WKLiquidGlassHelper.h"
 #define networkErrorViewHeight 50.0f
 
 @interface WKConversationListHeaderView ()
@@ -29,6 +30,7 @@
 // ---------- pc在线 ----------
 
 @property(nonatomic,strong) WKPCOnlineBarView *pcOnlineBarView;
+@property(nonatomic,strong,nullable) UIVisualEffectView *pcOnlineGlassView;
 
 
 
@@ -47,14 +49,9 @@
 
 -(void) setupUI {
     [self addSubview:self.contentView];
-    
-    [self.searchbarBoxView addSubview:self.searchbarView];
-    [self.contentView addSubview:self.searchbarBoxView];
-    self.searchbarView.lim_centerX_parent = self.searchbarBoxView;
-    
-    _showEmpty = true;
-    [self.contentView addSubview:self.tableHeaderBottomEmptyView];
-    
+    // 搜索在导航栏；header 仅在有网络错误等横幅时占高度，默认零高
+    _showEmpty = false;
+    [self collapseIfNeeded];
 }
 
 - (void)viewConfigChange:(WKViewConfigChangeType)type{
@@ -65,7 +62,12 @@
         self.warnLbl.textColor = [UIColor colorWithRed:231.0f/255.0f green:88.0f/255.0f blue:73.0f/255.0f alpha:1.0f];
         self.networkErroView.backgroundColor = [UIColor colorWithRed:251.0f/255.0f green:234.0f/255.0f blue:231.0f/255.0f alpha:1.0f];
     }
-    [self.pcOnlineBarView setBackgroundColor:[WKApp shared].config.backgroundColor];
+    if ([WKLiquidGlassHelper isLiquidGlassAvailable]) {
+        [self.pcOnlineBarView setBackgroundColor:[UIColor clearColor]];
+        self.tableHeaderBottomEmptyView.backgroundColor = [UIColor clearColor];
+    } else {
+        [self.pcOnlineBarView setBackgroundColor:[WKApp shared].config.backgroundColor];
+    }
 }
 
 - (void)setShowEmpty:(BOOL)showEmpty {
@@ -88,59 +90,70 @@
     _showNetworkError = showNetworkError;
     
     [self.networkErroView removeFromSuperview];
-    
-    self.showEmpty = !showNetworkError;
+    // 不再用空白占位条；无横幅时 header 高度为 0，避免分组 Tab 下出现大块空隙
+    self.showEmpty = NO;
     if(showNetworkError) {
-        self.showEmpty = false;
         [self.contentView addSubview:self.networkErroView];
-    }else{
-        self.showEmpty = true;
-    }
-    if([WKApp shared].config.style == WKSystemStyleDark) {
-        self.networkErroView.backgroundColor = [UIColor colorWithRed:115.0f/255.0f green:46.0f/255.0f blue:43.0f/255.0f alpha:1.0f];
-        self.warnLbl.textColor = [UIColor colorWithRed:142.0f/255.0f green:142.0f/255.0f blue:142.0f/255.0f alpha:1.0f];
-    }else{
-        self.warnLbl.textColor = [UIColor colorWithRed:231.0f/255.0f green:88.0f/255.0f blue:73.0f/255.0f alpha:1.0f];
-        self.networkErroView.backgroundColor = [UIColor colorWithRed:251.0f/255.0f green:234.0f/255.0f blue:231.0f/255.0f alpha:1.0f];
+        if([WKApp shared].config.style == WKSystemStyleDark) {
+            self.networkErroView.backgroundColor = [UIColor colorWithRed:115.0f/255.0f green:46.0f/255.0f blue:43.0f/255.0f alpha:1.0f];
+            self.warnLbl.textColor = [UIColor colorWithRed:142.0f/255.0f green:142.0f/255.0f blue:142.0f/255.0f alpha:1.0f];
+        }else{
+            self.warnLbl.textColor = [UIColor colorWithRed:231.0f/255.0f green:88.0f/255.0f blue:73.0f/255.0f alpha:1.0f];
+            self.networkErroView.backgroundColor = [UIColor colorWithRed:251.0f/255.0f green:234.0f/255.0f blue:231.0f/255.0f alpha:1.0f];
+        }
     }
     [self layoutSubviews];
 }
 
 - (void)setShowPCOnline:(BOOL)showPCOnline {
-    if(_showPCOnline == showPCOnline) {
+    // 网页/电脑已登录提示改放到会话列表导航栏左上角，不再占列表顶部独立行
+    if (_showPCOnline == showPCOnline) {
         return;
     }
     _showPCOnline = showPCOnline;
-    
     [self.pcOnlineBarView removeFromSuperview];
-    if(showPCOnline) {
-        self.showEmpty = false;
-        self.pcOnlineBarView.tipLbl.text = [NSString stringWithFormat:LLang(@"%@%@已经登录"),[WKOnlineStatusManager.shared deviceName:self.pcDeviceFlag],[WKApp shared].config.appName];
-        [self.pcOnlineBarView.tipLbl sizeToFit];
-        [self.contentView addSubview:self.pcOnlineBarView];
-    }else{
-        self.showEmpty = true;
-    }
+    self.showEmpty = NO;
     [self layoutSubviews];
+}
+
+- (void)collapseIfNeeded {
+    [self.pcOnlineBarView removeFromSuperview];
+    [self.tableHeaderBottomEmptyView removeFromSuperview];
+    if (!self.showNetworkError) {
+        [self.networkErroView removeFromSuperview];
+    }
 }
 
 - (void)layoutSubviews {
     [super layoutSubviews];
+    
+    // 确保旧的 PC 在线条 / 空白占位不会残留
+    [self.pcOnlineBarView removeFromSuperview];
+    if (!self.showEmpty) {
+        [self.tableHeaderBottomEmptyView removeFromSuperview];
+    }
     
     NSArray *subviews = self.contentView.subviews;
     
     UIView *preView;
     for (UIView *view in subviews) {
         if(!preView) {
-            view.lim_top = 10.0f;
+            view.lim_top = 0.0f;
         }else {
             view.lim_top = preView.lim_bottom;
         }
         view.lim_centerX_parent = self.contentView;
         preView = view;
     }
+    if (!preView) {
+        self.contentView.lim_height = 0.0f;
+        self.lim_size = CGSizeMake(WKScreenWidth, 0.0f);
+        self.bounds = CGRectMake(0, 0, WKScreenWidth, 0);
+        return;
+    }
     self.contentView.lim_height = preView.lim_bottom;
     self.lim_size = self.contentView.lim_size;
+    self.bounds = CGRectMake(0, 0, self.lim_width, self.lim_height);
 }
 
 - (UIView *)networkErroView {
@@ -166,19 +179,17 @@
     if(!_searchbarView) {
         _searchbarView = [[WKSearchbarView alloc] initWithFrame:CGRectMake(15.0f, 0.0f, WKScreenWidth - 30.0f, 36.0f)];
         _searchbarView.placeholder = LLang(@"搜索");
-        _searchbarView.onClick = ^{
-            WKGlobalSearchResultController *vc = [WKGlobalSearchResultController new];
-            [[WKNavigationManager shared] pushViewController:vc animated:NO];
-        };
-        
     }
     return _searchbarView;
 }
 
 - (UIView *)tableHeaderBottomEmptyView {
     if(!_tableHeaderBottomEmptyView) {
-        _tableHeaderBottomEmptyView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, WKScreenWidth, 10.0f)];
-        [_tableHeaderBottomEmptyView setBackgroundColor:[UIColor whiteColor]];
+        _tableHeaderBottomEmptyView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, WKScreenWidth, 6.0f)];
+        UIColor *fill = [WKLiquidGlassHelper isLiquidGlassAvailable]
+            ? [UIColor clearColor]
+            : [UIColor whiteColor];
+        [_tableHeaderBottomEmptyView setBackgroundColor:fill];
     }
     return _tableHeaderBottomEmptyView;
    
@@ -203,7 +214,17 @@
 - (WKPCOnlineBarView *)pcOnlineBarView {
     if(!_pcOnlineBarView) {
         _pcOnlineBarView = [[WKPCOnlineBarView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, WKScreenWidth, 48.0f)];
-        [_pcOnlineBarView setBackgroundColor:[WKApp shared].config.backgroundColor];
+        if ([WKLiquidGlassHelper isLiquidGlassAvailable]) {
+            [_pcOnlineBarView setBackgroundColor:[UIColor clearColor]];
+            self.pcOnlineGlassView = [WKLiquidGlassHelper installInView:_pcOnlineBarView
+                                                          cornerRadius:14
+                                                           interactive:YES
+                                                            solidColor:nil];
+            CGFloat inset = 12.0f;
+            self.pcOnlineGlassView.frame = CGRectMake(inset, 4.0f, WKScreenWidth - inset * 2.0f, 40.0f);
+        } else {
+            [_pcOnlineBarView setBackgroundColor:[WKApp shared].config.backgroundColor];
+        }
         _pcOnlineBarView.userInteractionEnabled = YES;
         [_pcOnlineBarView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(onPCOnlineTap)]];
     }

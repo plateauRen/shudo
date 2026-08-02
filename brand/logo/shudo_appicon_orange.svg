@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>叙叨 / Shudo App Icon · 石青</title>
   <defs>
     <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF4500"/>
-      <stop offset="100%" stop-color="#FF6B35"/>
+      <stop offset="0%" stop-color="#0E7490"/>
+      <stop offset="100%" stop-color="#38BDF8"/>
     </linearGradient>
   </defs>
-  <rect width="1024" height="1024" fill="url(#g)"/>
-  <g transform="translate(512,512)">
-    <path d="M0,-300 C167,-233 233,-33 100,167 C33,267 -100,267 -167,167 C-233,67 -167,-67 0,-133 C100,-167 167,-67 100,33 C67,100 -33,100 -67,33 C-100,-33 -33,-100 33,-67" stroke="#ffffff" stroke-width="48" stroke-linecap="round" fill="none"/>
-    <circle cx="0" cy="0" r="48" fill="#ffffff"/>
-    <circle cx="0" cy="0" r="24" fill="url(#g)"/>
-  </g>
+  <rect width="512" height="512" rx="112" fill="url(#g)"/>
+  <path d="M256 96c68 30 98 106 52 182-22 38-68 52-98 30-38-30-22-84 22-106 38-18 60 8 38 38-14 22-46 22-52 0-8-22 14-46 38-38" fill="none" stroke="#fff" stroke-width="26" stroke-linecap="round"/>
+  <circle cx="256" cy="256" r="30" fill="#fff"/>
+  <circle cx="256" cy="256" r="14" fill="url(#g)"/>
 </svg>

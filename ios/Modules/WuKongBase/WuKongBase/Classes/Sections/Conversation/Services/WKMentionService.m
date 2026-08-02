@@ -24,7 +24,8 @@ static WKMentionService *_instance;
 -(NSArray<id<WKMatchToken>>*)parseMention:(NSString *)str mentionInfo:(WKMentionedInfo *)mentionInfo{
     static NSRegularExpression *atExp; // @正则表达式
     if(!atExp) {
-        atExp = [NSRegularExpression regularExpressionWithPattern:@"@\\S+\\b"
+        // 不用 \\b：中文昵称在 NSRegularExpression 里常被当成非 word，\\b 会导致匹配失败
+        atExp = [NSRegularExpression regularExpressionWithPattern:@"@[^\\s@]+"
         options:NSRegularExpressionCaseInsensitive
           error:nil];
     }
@@ -41,23 +42,19 @@ static WKMentionService *_instance;
             
             [tokens addObject:[WKDefaultToken text:rawText range:rawRange type:WKatchTokenTypeText]];
         }
-        NSString *atUID;
+        NSString *atUID = @"";
         if(mentionInfo && mentionInfo.uids && mentionInfo.uids.count>mentionIndex) {
-            atUID = mentionInfo.uids[mentionIndex];
+            atUID = mentionInfo.uids[mentionIndex] ?: @"";
+            mentionIndex++;
         }
         NSString *rangeText = [str substringWithRange:result.range];
-        if(atUID) {
-           
-            WKMetionToken *token = [WKMetionToken new];
-            token.text = rangeText;
-            token.range = result.range;
-            token.index = mentionIndex;
-            token.uid = atUID;
-            [tokens addObject:token];
-            mentionIndex++;
-        }else {
-            [tokens addObject:[WKDefaultToken text:rangeText range:result.range type:WKatchTokenTypeText]];
-        }
+        // 始终按 mention token 输出，保证 @人名有主题色标注（即使缺少 uid）
+        WKMetionToken *token = [WKMetionToken new];
+        token.text = rangeText;
+        token.range = result.range;
+        token.index = mentionIndex > 0 ? mentionIndex - 1 : 0;
+        token.uid = atUID;
+        [tokens addObject:token];
       
         index = result.range.location + result.range.length;
     }];

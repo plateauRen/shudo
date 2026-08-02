@@ -28,6 +28,7 @@
 #import <WuKongBase/WuKongBase-Swift.h>
 #import "WKUserAvatar.h"
 #import "WKAutoDeleteView.h"
+#import "WKLiquidGlassHelper.h"
 //#define avatarSize 56.0f
 @interface WKConversationListCell ()
 
@@ -272,6 +273,10 @@
         }
     }else {
         self.titleLbl.text = model.channelInfo.displayName;
+        NSDictionary *subMeta = [[WKShudoOrgManager shared] subChannelMeta:model.channel.channelId];
+        if (subMeta[@"title"]) {
+            self.titleLbl.text = [NSString stringWithFormat:@"#%@", subMeta[@"title"]];
+        }
         if(model.channel.channelType == WK_PERSON) {
             if([model.channel.channelId isEqualToString:[WKApp shared].config.systemUID]) {
                 self.titleLbl.text = LLang(@"系统通知");
@@ -409,7 +414,12 @@
     }
     
     // 置顶
-    if(model.stick) { // 置顶
+    if ([WKLiquidGlassHelper isLiquidGlassAvailable]) {
+        UIColor *base = model.stick
+            ? [WKApp shared].config.backgroundColor
+            : [WKApp shared].config.cellBackgroundColor;
+        [self setBackgroundColor:[base colorWithAlphaComponent:0.72]];
+    } else if(model.stick) { // 置顶
         [self setBackgroundColor:[WKApp shared].config.backgroundColor];
     }else {
         [self setBackgroundColor:[WKApp shared].config.cellBackgroundColor];

@@ -7,12 +7,14 @@
 #import "WKGlobalSearchVM.h"
 #import "WKGlobalSearchResultController.h"
 #import "WKTabbar.h"
+#import "WKLiquidGlassHelper.h"
 #define searchBarHeight 36.0f
 @interface WKGlobalSearchResultController ()<WKChannelManagerDelegate>
 @property(nonatomic,strong) WKGlobalSearchVM *vm; // 搜索逻辑
 
 @property(nonatomic,strong) UITextField *searchBarInput; // 搜索输入框
 @property(nonatomic,strong) UIView *searchBarView; // 输入框的bar
+@property(nonatomic,strong,nullable) UIVisualEffectView *searchBarGlassView;
 
 @property(nonatomic,strong) WKTabbar *tabbar; // 顶部搜索类型的tabbar
 
@@ -85,10 +87,20 @@
         CGFloat statusHeight = [[UIApplication sharedApplication] statusBarFrame].size.height;
         _searchBarView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, self.view.lim_width - 70.0f, searchBarHeight)];
         _searchBarView.lim_left = 45.0f;
-        [_searchBarView setBackgroundColor:[WKApp shared].config.cellBackgroundColor];
         _searchBarView.layer.masksToBounds = YES;
-        _searchBarView.layer.cornerRadius = 4.0f;
+        _searchBarView.layer.cornerRadius = 10.0f;
         _searchBarView.lim_top = (self.navigationBar.lim_height-statusHeight)/2.0f - _searchBarView.lim_height/2.0f + statusHeight;
+        
+        if ([WKLiquidGlassHelper isLiquidGlassAvailable]) {
+            [_searchBarView setBackgroundColor:[UIColor clearColor]];
+            self.searchBarGlassView = [WKLiquidGlassHelper installInView:_searchBarView
+                                                           cornerRadius:10
+                                                            interactive:YES
+                                                             solidColor:nil];
+            self.searchBarGlassView.frame = _searchBarView.bounds;
+        } else {
+            [_searchBarView setBackgroundColor:[WKApp shared].config.cellBackgroundColor];
+        }
         
         UIImageView *iconImgView = [[UIImageView alloc] initWithImage: [self imageName:@"Common/Index/IconSearch2"]];
         iconImgView.frame = CGRectMake(6.0f, 0.0f, 16.0f, 16.0f);
@@ -149,7 +161,11 @@
 -(void) viewConfigChange:(WKViewConfigChangeType)type {
     [super viewConfigChange:type];
     if(type == WKViewConfigChangeTypeStyle) {
-        [_searchBarView setBackgroundColor:[WKApp shared].config.cellBackgroundColor];
+        if ([WKLiquidGlassHelper isLiquidGlassAvailable]) {
+            [_searchBarView setBackgroundColor:[UIColor clearColor]];
+        } else {
+            [_searchBarView setBackgroundColor:[WKApp shared].config.cellBackgroundColor];
+        }
     }
 }
 

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Shudo Logo V Send">
+  <title>Shudo V Send</title>
+  <defs>
+    <linearGradient id="vg" x1="56" y1="456" x2="456" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0E7490"/>
+      <stop offset="100%" stop-color="#122F38"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#vg)"/>
+  <!-- rounded send glyph: filled paper-plane-like but chunky IM style -->
+  <path fill="#ffffff" d="M118 256 L394 128 C410 120 426 134 418 150 L320 384 C314 398 294 400 284 388 L230 322 L168 372 C156 382 138 374 140 358 L156 278 Z"/>
+  <path fill="#67E8F9" d="M230 322 L394 128 L284 388 Z" opacity="0.35"/>
+</svg>

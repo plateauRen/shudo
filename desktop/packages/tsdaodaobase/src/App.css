@@ -1,32 +1,80 @@
+/* 叙叨 Web · 品牌色默认石青；运行时由 BrandTheme 覆盖 */
+:root {
+    /* Brand · 石青 */
+    --wk-color-theme: #0E7490;
+    --wk-color-theme-soft: rgba(14, 116, 144, 0.12);
+    --wk-color-theme-muted: rgba(14, 116, 144, 0.08);
 
+    /* Legacy aliases (keep for existing CSS) */
+    --wk-color-secondary: #EEF0F3;
+    --wk-color-secondary-2: #F7F8FA;
+    --wk-color-hover: #E8EAED;
+    --wk-color-font-tip: #8A9199;
+    --wk-color-item: #FFFFFF;
+    --wk-text-item: #1A1D21;
 
- :root {
-    --wk-color-theme: #FF4500;
-    --wk-color-secondary: #F5F6F7;
-    --wk-color-secondary-2: #F5F6F7;
-    --wk-color-hover: #EFF0F1;
-    /* 提示类型的字体颜色 */
-    --wk-color-font-tip: #8F959E;
+    /* Surfaces — app / rail / panel / raised */
+    --wk-surface-app: #E8EAED;
+    --wk-surface-rail: #F0F1F3;
+    --wk-surface-panel: #F7F8FA;
+    --wk-surface-raised: #FFFFFF;
+    --wk-surface-sunken: #EEF0F3;
+
+    /* Text */
+    --wk-text-primary: #1A1D21;
+    --wk-text-secondary: #5C636A;
+    --wk-text-tertiary: #8A9199;
+    --wk-text-on-theme: #FFFFFF;
+
+    /* Border */
+    --wk-border: #E1E4E8;
+    --wk-border-subtle: #EBEDF0;
+    --wk-line-color: var(--wk-border);
+    --wk-line: 1px solid var(--wk-border);
+
+    /* Interaction */
+    --wk-hover: #E8EAED;
+    --wk-active: #E2E5E9;
+    --wk-focus-ring: rgba(14, 116, 144, 0.35);
+    --wk-selected: var(--wk-color-theme-muted);
+    --wk-selected-strong: var(--wk-color-theme-soft);
+
+    /* Shape & space */
+    --wk-radius-sm: 6px;
+    --wk-radius-md: 10px;
+    --wk-radius-lg: 14px;
+    --wk-radius-pill: 999px;
+    --wk-space-1: 4px;
+    --wk-space-2: 8px;
+    --wk-space-3: 12px;
+    --wk-space-4: 16px;
+    --wk-space-5: 20px;
+    --wk-space-6: 24px;
+
+    /* Elevation (restrained) */
+    --wk-shadow-sm: 0 1px 2px rgba(26, 29, 33, 0.04);
+    --wk-shadow-md: 0 4px 16px rgba(26, 29, 33, 0.06);
+
+    /* Layout */
+    --wk-width-rail: 64px;
     --wk-width-layout-content-left: 300px;
     --wk-wdith-conversation-list: var(--wk-width-layout-content-left);
-    /* --wk-height-chat-search: 65px; */
-    --wk-height-chat-search: 64px;
-    --wk-height-chat-conversation-header: 64px;
+    --wk-height-chat-search: 56px;
+    --wk-height-chat-conversation-header: 56px;
     --wk-wdith-chat-channelsetting: 340px;
-    --wk-layer-transition: 300ms cubic-bezier(0.33,1,0.68,1);
-    --wk-slide-transition: 450ms cubic-bezier(0.25, 1, 0.5, 1);
+    --sider-width: var(--wk-width-rail);
+    --wk-layer-transition: 220ms cubic-bezier(0.33, 1, 0.68, 1);
+    --wk-slide-transition: 380ms cubic-bezier(0.25, 1, 0.5, 1);
 
-    --wk-line: 1px solid #E5E6EB;
-    --wk-line-color:  #E5E6EB;
-
-    --wk-color-item: #FFFFFF;
-    --wk-text-item:  #1F2329;
-
+    /* Bubbles */
     --wk-message-item: #FFFFFF;
-    --wk-message-color: #1F2329;
-    /* Feishu pale send bubble — low saturation, easy on eyes */
-    --wk-color-message-send: #D6E4FF;
-    --wk-color-message-send-text: #1F2329;
+    --wk-message-color: var(--wk-text-primary);
+    --wk-color-message-send: #D0EAF2;
+    --wk-color-message-send-text: var(--wk-text-primary);
+
+    /* Font */
+    --wk-font-sans: "PingFang SC", "Hiragino Sans GB", "Segoe UI", "Microsoft YaHei",
+      -apple-system, BlinkMacSystemFont, "Apple Color Emoji", sans-serif;
   }
 
   *, *:before, *:after {
@@ -34,30 +82,52 @@
   }
 
   body[theme-mode=dark] {
-    --wk-color-theme: #FF6B35;
-    --wk-color-secondary: #17181A;
-    --wk-color-secondary-2: #1F2329;
-    --wk-color-hover: #2B2F36;
-    --wk-color-font-tip: #8F959E;
-    --wk-line: 1px solid #2B2F36;
-    --wk-line-color: #2B2F36;
-    --wk-color-item: #1F2329;
-    --wk-text-item: #C9CDD4;
-    color: #C9CDD4 !important;
+    --wk-color-theme: #38BDF8;
+    --wk-color-theme-soft: rgba(56, 189, 248, 0.18);
+    --wk-color-theme-muted: rgba(56, 189, 248, 0.12);
 
-    --wk-message-item: #1F2329;
-    --wk-message-color: #C9CDD4;
-    --wk-color-message-send: #2B3A55;
-    --wk-color-message-send-text: #C9CDD4;
+    --wk-color-secondary: #141516;
+    --wk-color-secondary-2: #1A1C1E;
+    --wk-color-hover: #26292C;
+    --wk-color-font-tip: #8A9199;
+    --wk-color-item: #1E2124;
+    --wk-text-item: #D5D8DC;
 
-    --semi-color-primary: #FF6B35;
-    --semi-color-primary-hover: rgba(78, 131, 253, 0.55);
+    --wk-surface-app: #0F1011;
+    --wk-surface-rail: #141516;
+    --wk-surface-panel: #1A1C1E;
+    --wk-surface-raised: #222528;
+    --wk-surface-sunken: #121314;
 
+    --wk-text-primary: #E8EAED;
+    --wk-text-secondary: #A0A6AD;
+    --wk-text-tertiary: #7A8188;
+    --wk-text-on-theme: #FFFFFF;
+
+    --wk-border: #2A2E32;
+    --wk-border-subtle: #232629;
+    --wk-line-color: var(--wk-border);
+    --wk-line: 1px solid var(--wk-border);
+
+    --wk-hover: #26292C;
+    --wk-active: #2C3034;
+    --wk-focus-ring: rgba(56, 189, 248, 0.4);
+    --wk-selected: var(--wk-color-theme-muted);
+    --wk-selected-strong: var(--wk-color-theme-soft);
+
+    --wk-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --wk-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+
+    --wk-message-item: #222528;
+    --wk-message-color: var(--wk-text-primary);
+    --wk-color-message-send: #0C4A5C;
+    --wk-color-message-send-text: var(--wk-text-primary);
+
+    color: var(--wk-text-primary) !important;
+
+    --semi-color-primary: #38BDF8;
+    --semi-color-primary-hover: #7DD3FC;
   }
-
-  /* ::-webkit-scrollbar-thumb:window-inactive {
-    background:rgba(255,0,0,0.4);
-  } */
 
 html {
     height: 100%;
@@ -67,21 +137,16 @@ html {
   body {
     height: 100%;
     margin: 0;
-    margin: 0;
-    /* font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif; */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Fira Sans,Droid Sans,Cantarell,sans-serif; */
-    font-family: "Roboto",-apple-system,BlinkMacSystemFont,"Apple Color Emoji","Helvetica Neue",sans-serif;
+    font-family: var(--wk-font-sans);
     font-size: 14px;
-    -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    background: var( --background-color);
-    color: #1F2329 ;
+    background: var(--wk-surface-app);
+    color: var(--wk-text-primary);
 
-    --semi-color-primary: #FF4500;
+    --semi-color-primary: #0E7490;
+    --semi-color-primary-hover: #0F8AAB;
   }
 
   div {
@@ -100,7 +165,7 @@ html {
   .page {
     width: 100%;
     height: 100%;
-    background-color: #F5F6F7;
+    background-color: var(--wk-surface-app);
   }
   
   .pageContent {

@@ -1,49 +1,165 @@
 
+/* ===== 消息输入框 ===== */
 .wk-messageinput-box {
-    background: #fff;
     width: 100%;
-    height: 100%;
-    position: relative;
-
-    box-shadow: 0.3rem -0.2rem 0.8rem 0.05rem rgb(114 114 114 / 5%);
-    border-left: none;
+    background: #fff;
+    border-top: 1px solid rgba(0,0,0,0.08);
 }
 
 body[theme-mode=dark] .wk-messageinput-box {
-    background-color: var(--wk-color-secondary);
+    background: var(--wk-color-secondary);
+    border-top-color: rgba(255,255,255,0.08);
 }
 
-/* .wk-messageinput-box:hover {
-     box-shadow: 0 0 10px rgb(0 0 0 / 15%)
-} */
+.wk-messageinput-box-top {
+    padding: 0 16px;
+}
 
-.wk-messageinput-inputbox {
-    height: 77px;
-    width: 100%;
-    padding: 0px 15px 15px 15px;
-    box-sizing: border-box;
+/* ---- 工具栏 ---- */
+.wk-messageinput-bar {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    background: #fff;
+}
+
+body[theme-mode=dark] .wk-messageinput-bar {
+    background: var(--wk-color-secondary);
+}
+
+.wk-messageinput-toolbar {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.wk-messageinput-actionbox {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+/* ---- 输入外壳 ---- */
+.wk-messageinput-shell {
+    display: flex;
+    align-items: flex-end;
+    margin: 0 10px 10px;
+    padding: 4px 4px 4px 12px;
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 10px;
+    background: #fff;
+    transition: border-color 0.2s;
+}
+
+.wk-messageinput-shell:focus-within {
+    border-color: var(--wk-color-theme, #FF4500);
+}
+
+body[theme-mode=dark] .wk-messageinput-shell {
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(255,255,255,0.12);
+}
+
+body[theme-mode=dark] .wk-messageinput-shell:focus-within {
+    border-color: var(--wk-color-theme, #FF6B35);
+}
+
+/* ---- 输入区域 ---- */
+.wk-messageinput-field {
+    flex: 1;
+    min-width: 0;
 }
 
 .wk-messageinput-input-wrap {
-    position: relative;
-    height: 100%;
     width: 100%;
 }
 
-.wk-messageinput-input-wrap .wk-messageinput-input {
-    height: 100%;
+.wk-messageinput-input {
     width: 100%;
-    padding-right: 36px;
-    box-sizing: border-box;
+    min-height: 30px;
+    max-height: 120px;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    color: #333;
+    overflow-y: auto;
+    display: inline-block;
 }
 
-.wk-messageinput-expand {
+body[theme-mode=dark] .wk-messageinput-input {
+    color: #e8e8e8;
+}
+
+.wk-messageinput-input textarea {
+    outline: none;
+    border: none;
+    resize: none;
+}
+
+.wk-messageinput-input:empty:before {
+    content: attr(data-placeholder);
     position: absolute;
-    right: 2px;
-    bottom: 4px;
+    color: #a9a9a9;
+}
+
+body[theme-mode=dark] .wk-messageinput-input__input {
+    color: #e8e8e8;
+}
+
+.wk-messageinput-input__control {
+    background: transparent !important;
+}
+
+body[theme-mode=dark] .wk-messageinput-input__control {
+    background: transparent !important;
+}
+
+.wk-messageinput-input__suggestions {
+    background-color: var(--wk-color-item);
+}
+
+/* ---- 发送按钮 ---- */
+.wk-messageinput-sendbtn {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #c0c4cc;
+    cursor: default;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wk-messageinput-sendbtn.wk-messageinput-hasValue {
+    color: var(--wk-color-theme, #FF4500);
+    cursor: pointer;
+}
+
+.wk-messageinput-sendbtn.wk-messageinput-hasValue:hover {
+    background: rgba(255,69,0,0.08);
+}
+
+body[theme-mode=dark] .wk-messageinput-sendbtn {
+    color: #555;
+}
+
+body[theme-mode=dark] .wk-messageinput-sendbtn.wk-messageinput-hasValue {
+    color: var(--wk-color-theme, #FF6B35);
+}
+
+body[theme-mode=dark] .wk-messageinput-sendbtn.wk-messageinput-hasValue:hover {
+    background: rgba(255,107,53,0.15);
+}
+
+/* ---- 展开按钮 ---- */
+.wk-messageinput-expand {
+    flex-shrink: 0;
     width: 30px;
     height: 30px;
-    padding: 0;
     border: none;
     border-radius: 6px;
     background: transparent;
@@ -52,108 +168,29 @@ body[theme-mode=dark] .wk-messageinput-box {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 2;
 }
 
 .wk-messageinput-expand:hover {
     color: var(--wk-color-theme, #FF4500);
-    background: rgba(0, 0, 0, 0.04);
+    background: rgba(0,0,0,0.04);
 }
 
-body[theme-mode="dark"] .wk-messageinput-expand {
+body[theme-mode=dark] .wk-messageinput-expand {
     color: #a0a0a0;
 }
 
-body[theme-mode="dark"] .wk-messageinput-expand:hover {
-    background: rgba(255, 255, 255, 0.08);
+body[theme-mode=dark] .wk-messageinput-expand:hover {
+    background: rgba(255,255,255,0.08);
     color: var(--wk-color-theme, #FF6B35);
 }
 
-.wk-messageinput-input {
-    height: 100%;
-    width: 100%;
-    border: none;
-    color: #333;
-    font-size: 14px;
-    overflow-y: scroll;
-    display: inline-block;
-    -webkit-user-modify: read-write-plaintext-only;
-    outline: none;
-}
-
-body[theme-mode=dark] .wk-messageinput-input {
-    color: white;
-}
-
-.wk-messageinput-input textarea {
-    outline: none;
-    border: none;
-}
-
-.wk-messageinput-input:empty:before {
-        content: attr(data-placeholder);
-        position: absolute;
-        color: #a9a9a9;
-}
-
-.wk-messageinput-bar {
-    height: 40px;
-    width: 100%;
-    display: flex;
-    top: 0px;
-}
-
-.wk-messageinput-tabs {
-    height: 100%;
-    width: 50%;
-}
-
-.wk-messageinput-toolbar {
-    height: 100%;
-    width: 50%;
-    display: flex;
-    justify-content: space-between;
-}
-
-.wk-messageinput-actionbox {
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    margin-left: 10px;
-}
-
-.wk-messageinput-actionitem {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.wk-messageinput-sendbtn {
-    height: 28px;
-    width: 32px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: linear-gradient(180deg,#92a2b1 4.39%,#7b8e9f 94.46%);
-    border-radius: 2px;
-    cursor: pointer;
-}
-
-.wk-messageinput-hasValue {
-    background-color: var(--wk-color-theme);
-}
-
-
+/* ---- 成员列表/回复 ---- */
 .wk-messageinput-member {
-    height: 100%;
-    width: 100%;
-    padding: 0 16px;
-    align-items: center;
-    box-sizing: border-box;
     display: flex;
+    align-items: center;
+    padding: 0 16px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .wk-messageinput-iconbox {
@@ -168,58 +205,18 @@ body[theme-mode=dark] .wk-messageinput-input {
 
 .wk-messageinput-selected {
     color: #fff;
-    /* background-color: #1264a3; */
-}
-
-.quickReplyPanel {
-    position: absolute;
-    box-shadow: 1px -1px 12px -2px rgb(0 0 0 / 28%);
-    max-height: 400px;
-    overflow-x: hidden;
-    bottom: 0;
-    background-color: white;
-    width: 100%;
-    border-radius: 4px;
-}
-
-    .quickReplyPanel ul {
-        margin: 0;
-        padding: 0;
-    }
-
-        .quickReplyPanel ul li {
-            list-style-type: none;
-            height: 60px;
-            border-bottom: 1px solid rgba(9,30,66,.12);
-            cursor: pointer;
-        }
-
-.quickReplyItem {
-}
-
-    .quickReplyItem :hover {
-        background-color: #f4f5f7;
-    }
-
-
-.quickReplySelect {
-    background-color: #5d657a !important;
-    color: #fff !important;
-}
-
-.wk-messageinput-header {
 }
 
 .wk-messageinput-reply {
-    margin: 10px 10px 0px 10px;
-    background-color: #f5f6f7;
+    margin: 10px 10px 0;
+    background: #f5f6f7;
     display: flex;
     color: #8f959e;
     align-items: center;
 }
 
 .wk-messageinput-closeicon {
-    margin: 0px 6px;
+    margin: 0 6px;
     cursor: pointer;
 }
 
@@ -229,18 +226,23 @@ body[theme-mode=dark] .wk-messageinput-input {
     height: 22px;
 }
 
-.wk-messageinput-input__control {
-    background-color: white;
+.quickReplyPanel {
+    position: absolute;
+    box-shadow: 1px -1px 12px -2px rgb(0 0 0 / 28%);
+    max-height: 400px;
+    overflow-x: hidden;
+    bottom: 0;
+    background: #fff;
+    width: 100%;
+    border-radius: 4px;
 }
 
-body[theme-mode=dark]  .wk-messageinput-input__control {
-    background-color: var(--wk-color-secondary-2);
+.quickReplyPanel ul { margin: 0; padding: 0; }
+.quickReplyPanel ul li {
+    list-style: none;
+    height: 60px;
+    border-bottom: 1px solid rgba(9,30,66,.12);
+    cursor: pointer;
 }
-
-.wk-messageinput-input__suggestions {
-    background-color: var(--wk-color-item);
-}
-
-body[theme-mode=dark] .wk-messageinput-input__input {
-    color: white;
-}
+.quickReplyItem :hover { background: #f4f5f7; }
+.quickReplySelect { background: #5d657a !important; color: #fff !important; }

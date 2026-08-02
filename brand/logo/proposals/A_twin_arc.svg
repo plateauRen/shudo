@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>叙叨 · 方案 A · 回声</title>
+  <defs>
+    <linearGradient id="a" x1="60" y1="40" x2="460" y2="470" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0E7490"/><stop offset="100%" stop-color="#38BDF8"/>
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="256" fill="url(#a)"/>
+  <path d="M160 180 C120 230 120 310 168 360 C190 386 230 396 268 378" fill="none" stroke="#fff" stroke-width="28" stroke-linecap="round" opacity="0.35"/>
+  <path d="M196 200 C166 236 168 300 204 336 C220 354 248 360 274 348" fill="none" stroke="#fff" stroke-width="28" stroke-linecap="round" opacity="0.65"/>
+  <path d="M236 224 C218 248 220 292 244 316 C256 328 274 330 290 320" fill="none" stroke="#fff" stroke-width="28" stroke-linecap="round"/>
+  <circle cx="318" cy="300" r="34" fill="#fff"/>
+</svg>

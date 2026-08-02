@@ -4,6 +4,7 @@ import {
   IModule,
   WKApp,
   ThemeMode,
+  brandContactIconDataUri,
 } from "@tsdaodao/base";
 import {
   ChannelTypePerson,
@@ -50,8 +51,8 @@ export default class ContactsModule implements IModule {
         <IconListItem
           badge={ WKApp.shared.getFriendApplysUnreadCount() }
           title="新朋友"
-          icon={require("./assets/friend_new.png")}
-          backgroudColor={"var(--wk-color-secondary)"}
+          icon={brandContactIconDataUri("newFriend")}
+          backgroudColor={"var(--wk-color-theme)"}
           onClick={() => {
             WKApp.routeLeft.push(<NewFriend></NewFriend>);
           }}
@@ -63,8 +64,8 @@ export default class ContactsModule implements IModule {
       return (
         <IconListItem
           title="保存的群"
-          icon={require("./assets/icon_group_save.png")}
-          backgroudColor={"var(--wk-color-secondary)"}
+          icon={brandContactIconDataUri("savedGroup")}
+          backgroudColor={"var(--wk-color-theme)"}
           onClick={() => {
             WKApp.routeLeft.push(<GroupSave></GroupSave>);
           }}
@@ -78,8 +79,8 @@ export default class ContactsModule implements IModule {
         return (
           <IconListItem
             title="黑名单"
-            icon={require("./assets/blacklist.png")}
-            backgroudColor={"var(--wk-color-secondary)"}
+            icon={brandContactIconDataUri("blacklist")}
+            backgroudColor={"var(--wk-color-theme)"}
             onClick={() => {
               WKApp.routeLeft.push(<Blacklist></Blacklist>);
             }}

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Shudo Logo M Open Chat">
+  <title>Shudo M Open Chat</title>
+  <defs>
+    <linearGradient id="mg" x1="40" y1="440" x2="472" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7EB0D9"/>
+      <stop offset="55%" stop-color="#3B6D9A"/>
+      <stop offset="100%" stop-color="#1B4D5C"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#mg)"/>
+  <circle cx="188" cy="200" r="26" fill="#17141f"/>
+  <circle cx="324" cy="200" r="26" fill="#17141f"/>
+  <ellipse cx="256" cy="330" rx="78" ry="58" fill="#17141f"/>
+  <ellipse cx="256" cy="326" rx="42" ry="28" fill="#E8F4FA"/>
+</svg>

@@ -15,7 +15,7 @@
     width: 100%;
     height: 100%;
     position: absolute;
-    background-color: var(--wk-color-secondary);
+    background-color: var(--wk-surface-panel);
     transition: transform var(--wk-layer-transition);
     overflow: hidden;
 }

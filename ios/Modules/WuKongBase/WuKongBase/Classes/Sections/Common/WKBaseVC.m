@@ -15,6 +15,7 @@
 #import "WKNavigationManager.h"
 #import "WKLogs.h"
 #import "WuKongBase.h"
+#import "WKLiquidGlassHelper.h"
 
 
 @implementation WKFinishButton
@@ -66,6 +67,27 @@
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
+    [self attachNavigationScrollEdgeIfNeeded];
+}
+
+/// Subclasses with a primary UIScrollView can override; default walks first-level subviews.
+- (UIScrollView *)primaryScrollViewForLiquidGlass {
+    for (UIView *sub in self.view.subviews) {
+        if ([sub isKindOfClass:[UIScrollView class]] && sub != self.navigationBar) {
+            return (UIScrollView *)sub;
+        }
+    }
+    return nil;
+}
+
+- (void)attachNavigationScrollEdgeIfNeeded {
+    UIScrollView *scrollView = [self primaryScrollViewForLiquidGlass];
+    if (!scrollView || !self.navigationBar) {
+        return;
+    }
+    [WKLiquidGlassHelper attachScrollEdgeInteractionToView:self.navigationBar
+                                                scrollView:scrollView
+                                                      edge:UIRectEdgeTop];
 }
 
 - (void)dealloc

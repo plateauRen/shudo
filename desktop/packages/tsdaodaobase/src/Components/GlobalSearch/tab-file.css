@@ -5,4 +5,7 @@
     overflow: auto;
     flex-direction: column;
     cursor: pointer;
+    padding: var(--wk-space-2);
+    box-sizing: border-box;
+    background: var(--wk-surface-panel);
 }

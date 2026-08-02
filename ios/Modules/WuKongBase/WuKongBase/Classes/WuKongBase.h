@@ -157,6 +157,7 @@
 #import "WKThemeUtil.h"
 #import "WKSearchMediaCell.h"
 #import "WKTranslateManager.h"
+#import "WKShudoOrgManager.h"
 
 #define LLang(a) [a Localized:self]
 #define LLangW(a,w) [a Localized:w]

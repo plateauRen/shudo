@@ -1,32 +1,40 @@
-
-
-.wk-blacklist {
-
+.wk-blacklist-content {
+    padding: var(--wk-space-2);
+    box-sizing: border-box;
+    background: var(--wk-surface-panel);
+    min-height: 100%;
 }
 
 .wk-blacklist-content ul li {
-    height: 80px;
+    height: 68px;
     width: 100%;
-    background-color: var(--wk-color-item);
+    background-color: transparent;
     display: flex;
     align-items: center;
     cursor: pointer;
+    border-radius: var(--wk-radius-md);
+    margin-bottom: 2px;
+    transition: background-color var(--wk-layer-transition);
 }
 
+.wk-blacklist-content ul li:hover {
+    background-color: var(--wk-hover);
+}
 
 .wk-blacklist-content-avatar {
-    margin-left: 15px;
+    margin-left: 12px;
 }
 
 .wk-blacklist-content-avatar img{
-    width: 50px;
-    height: 50px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
+    object-fit: cover;
 }
 
 .wk-blacklist-content-title {
-    margin-left: 15px;
-    font-size: 15px;
+    margin-left: 12px;
+    font-size: 14px;
     font-weight: 500;
-    color: var(--wk-text-item);
+    color: var(--wk-text-primary);
 }

@@ -117,6 +117,21 @@
     self.cachedBaseURL = dir;
 }
 
+- (void)buildCacheIfNeeded:(void (^)(void))done {
+    if (self.cachedHTML.length) {
+        if (done) done();
+        return;
+    }
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+        @synchronized (self) {
+            [self ensureCachedHTML];
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (done) done();
+        });
+    });
+}
+
 - (WKWebViewConfiguration *)makeConfiguration {
     WKUserContentController *ucc = [[WKUserContentController alloc] init];
     [ucc addScriptMessageHandler:self.scriptProxy name:@"richEditor"];
@@ -133,7 +148,9 @@
 - (void)attachOffscreen:(WKWebView *)wv {
     CGRect screen = [UIScreen mainScreen].bounds;
     // Real-ish size so TipTap/layout initialize like production (2×2 stalls JS).
-    wv.frame = CGRectMake(-screen.size.width, 0, screen.size.width, screen.size.height * 0.7);
+    // Keep height modest to reduce Simulator compositing cost.
+    CGFloat h = MIN(480.0, screen.size.height * 0.45);
+    wv.frame = CGRectMake(-screen.size.width, 0, screen.size.width, h);
     wv.alpha = 0.01;
     wv.hidden = NO;
     UIWindow *win = [UIApplication sharedApplication].keyWindow;
@@ -147,26 +164,37 @@
     }
 }
 
-- (void)prewarm {
+- (void)createWarmWebViewIfNeeded {
     if (self.warmWebView || self.borrowed) return;
-    if (self.loading && self.warmWebView) return;
+    self.loading = YES;
+    WKWebView *wv = [[WKRichEditorWebView alloc] initWithFrame:CGRectZero
+                                                 configuration:[self makeConfiguration]];
+    wv.opaque = NO;
+    if (@available(iOS 13.0, *)) {
+        wv.backgroundColor = [UIColor systemBackgroundColor];
+        wv.scrollView.backgroundColor = [UIColor systemBackgroundColor];
+    } else {
+        wv.backgroundColor = [UIColor whiteColor];
+    }
+    [self attachOffscreen:wv];
+    self.warmWebView = wv;
+    [self loadEditorInto:wv];
+}
+
+- (void)prewarm {
+    if (self.warmWebView || self.borrowed || self.loading) return;
+    self.loading = YES;
 
     void (^create)(void) = ^{
-        if (self.warmWebView || self.borrowed) return;
-        self.loading = YES;
-        [self ensureCachedHTML];
-        WKWebView *wv = [[WKRichEditorWebView alloc] initWithFrame:CGRectZero
-                                                     configuration:[self makeConfiguration]];
-        wv.opaque = NO;
-        if (@available(iOS 13.0, *)) {
-            wv.backgroundColor = [UIColor systemBackgroundColor];
-            wv.scrollView.backgroundColor = [UIColor systemBackgroundColor];
-        } else {
-            wv.backgroundColor = [UIColor whiteColor];
-        }
-        [self attachOffscreen:wv];
-        self.warmWebView = wv;
-        [self loadEditorInto:wv];
+        [self buildCacheIfNeeded:^{
+            if (self.borrowed) {
+                // Cold open already created a webview while we were caching.
+                self.loading = NO;
+                return;
+            }
+            if (self.warmWebView) return;
+            [self createWarmWebViewIfNeeded];
+        }];
     };
 
     if ([NSThread isMainThread]) {
@@ -205,11 +233,7 @@
         wv.hidden = NO;
         return wv;
     }
-    // Ensure create happens immediately on cold path
-    [self prewarm];
-    if (self.warmWebView) {
-        return [self borrowWebView];
-    }
+    // User is opening the editor now — create synchronously (cache may already be warm).
     self.borrowed = YES;
     self.ready = NO;
     self.loading = YES;

@@ -328,10 +328,16 @@ static void * kLinkColor = &kLinkColor;
     
     UIColor *metionColor = self.metionColor;
     if(!metionColor) {
-        metionColor = [WKApp shared].config.themeColor;
+        metionColor = [WKApp shared].config.themeColor ?: [UIColor systemBlueColor];
     }
     NSMutableDictionary *attributes = [NSMutableDictionary dictionary];
     [attributes setObject:metionColor forKey:NSForegroundColorAttributeName];
+    // 加粗，与 Web font-weight:600 对齐
+    UIFont *baseFont = self.font ?: [UIFont systemFontOfSize:16];
+    UIFont *boldFont = [UIFont systemFontOfSize:baseFont.pointSize weight:UIFontWeightSemibold];
+    if (boldFont) {
+        [attributes setObject:boldFont forKey:NSFontAttributeName];
+    }
     if(self.metionUnderline) {
         [attributes setObject:@1 forKey:NSUnderlineStyleAttributeName];
     }

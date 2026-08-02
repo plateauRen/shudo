@@ -5,7 +5,7 @@ type Props = {
   editor: Editor | null;
 };
 
-type Pos = { top: number; left: number; place: "above" | "below" };
+type Pos = { top: number; left: number };
 
 function findTableEl(editor: Editor): HTMLElement | null {
   const { view, state } = editor;
@@ -20,11 +20,15 @@ function findTableEl(editor: Editor): HTMLElement | null {
   return null;
 }
 
+/**
+ * Telegram-style table control: floating ⋯ on the table corner,
+ * menu for insert/delete row & column.
+ */
 export function TableBubble({ editor }: Props) {
   const [tick, setTick] = useState(0);
   const [pos, setPos] = useState<Pos | null>(null);
   const [open, setOpen] = useState(false);
-  const bubbleRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const inTable = !!editor?.isActive("table");
 
   useEffect(() => {
@@ -46,6 +50,17 @@ export function TableBubble({ editor }: Props) {
     if (!inTable) setOpen(false);
   }, [inTable]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [open]);
+
   useLayoutEffect(() => {
     if (!editor || !inTable) {
       setPos((p) => (p ? null : p));
@@ -61,104 +76,113 @@ export function TableBubble({ editor }: Props) {
     }
     const t = tableEl.getBoundingClientRect();
     const r = root.getBoundingClientRect();
-    const h = bubbleRef.current?.offsetHeight || (open ? 72 : 34);
-    const gap = 6;
-    const spaceBelow = r.bottom - t.bottom;
-    const place: "above" | "below" =
-      spaceBelow >= h + gap || spaceBelow >= t.top - r.top ? "below" : "above";
-    const top =
-      place === "below"
-        ? t.bottom - r.top + gap + root.scrollTop
-        : Math.max(4, t.top - r.top - h - gap + root.scrollTop);
     const next: Pos = {
-      top,
-      left: Math.max(4, t.left - r.left + root.scrollLeft),
-      place,
+      top: Math.max(4, t.top - r.top + root.scrollTop - 4),
+      left: Math.max(4, t.right - r.left + root.scrollLeft - 36),
     };
     setPos((prev) =>
-      prev &&
-      prev.top === next.top &&
-      prev.left === next.left &&
-      prev.place === next.place
-        ? prev
-        : next
+      prev && prev.top === next.top && prev.left === next.left ? prev : next
     );
   }, [editor, inTable, tick, open]);
 
   if (!editor || !inTable || !pos) return null;
 
+  const run = (fn: () => void) => {
+    fn();
+    setOpen(false);
+  };
+
+  const items: Array<
+    | { type: "item"; label: string; danger?: boolean; action: () => void }
+    | { type: "sep" }
+  > = [
+    {
+      type: "item",
+      label: "在上方添加行",
+      action: () => editor.chain().focus().addRowBefore().run(),
+    },
+    {
+      type: "item",
+      label: "在下方添加行",
+      action: () => editor.chain().focus().addRowAfter().run(),
+    },
+    {
+      type: "item",
+      label: "删除当前行",
+      danger: true,
+      action: () => editor.chain().focus().deleteRow().run(),
+    },
+    { type: "sep" },
+    {
+      type: "item",
+      label: "在左侧添加列",
+      action: () => editor.chain().focus().addColumnBefore().run(),
+    },
+    {
+      type: "item",
+      label: "在右侧添加列",
+      action: () => editor.chain().focus().addColumnAfter().run(),
+    },
+    {
+      type: "item",
+      label: "删除当前列",
+      danger: true,
+      action: () => editor.chain().focus().deleteColumn().run(),
+    },
+    { type: "sep" },
+    {
+      type: "item",
+      label: "删除整个表格",
+      danger: true,
+      action: () => {
+        if (!window.confirm("删除整个表格？")) return;
+        editor.chain().focus().deleteTable().run();
+      },
+    },
+  ];
+
   return (
     <div
-      ref={bubbleRef}
-      className={`wk-rich-table-bubble${open ? " is-open" : " is-collapsed"}`}
+      ref={rootRef}
+      className={`wk-rich-table-corner${open ? " is-open" : ""}`}
       style={{ top: pos.top, left: pos.left }}
       onMouseDown={(e) => e.preventDefault()}
     >
       <button
         type="button"
-        className="wk-rich-table-toggle"
-        title={open ? "收起表格工具" : "表格工具"}
+        className="wk-rich-table-more"
+        title="表格设置"
+        aria-label="表格设置"
+        aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        表{open ? "▴" : "▾"}
+        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden>
+          <circle cx="12" cy="5" r="1.8" fill="currentColor" />
+          <circle cx="12" cy="12" r="1.8" fill="currentColor" />
+          <circle cx="12" cy="19" r="1.8" fill="currentColor" />
+        </svg>
       </button>
       {open ? (
-        <div className="wk-rich-table-actions">
-          <button
-            type="button"
-            title="上方插入行"
-            onClick={() => editor.chain().focus().addRowBefore().run()}
-          >
-            ↑行
-          </button>
-          <button
-            type="button"
-            title="下方插入行"
-            onClick={() => editor.chain().focus().addRowAfter().run()}
-          >
-            ↓行
-          </button>
-          <button
-            type="button"
-            title="删除当前行"
-            onClick={() => editor.chain().focus().deleteRow().run()}
-          >
-            ×行
-          </button>
-          <span className="wk-rich-tb-sep" />
-          <button
-            type="button"
-            title="左侧插入列"
-            onClick={() => editor.chain().focus().addColumnBefore().run()}
-          >
-            ←列
-          </button>
-          <button
-            type="button"
-            title="右侧插入列"
-            onClick={() => editor.chain().focus().addColumnAfter().run()}
-          >
-            →列
-          </button>
-          <button
-            type="button"
-            title="删除当前列"
-            onClick={() => editor.chain().focus().deleteColumn().run()}
-          >
-            ×列
-          </button>
-          <span className="wk-rich-tb-sep" />
-          <button
-            type="button"
-            title="删除表格"
-            className="danger"
-            onClick={() => {
-              if (!window.confirm("删除整个表格？")) return;
-              editor.chain().focus().deleteTable().run();
-            }}
-          >
-            ×表
-          </button>
+        <div className="wk-rich-table-menu" role="menu">
+          {items.map((it, i) =>
+            it.type === "sep" ? (
+              <div key={`s-${i}`} className="wk-rich-table-menu-sep" />
+            ) : (
+              <button
+                key={it.label}
+                type="button"
+                role="menuitem"
+                className={
+                  it.danger
+                    ? "wk-rich-table-menu-item is-danger"
+                    : "wk-rich-table-menu-item"
+                }
+                onClick={() => run(it.action)}
+              >
+                {it.label}
+              </button>
+            )
+          )}
         </div>
       ) : null}
     </div>

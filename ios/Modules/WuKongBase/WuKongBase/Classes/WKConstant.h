@@ -102,6 +102,13 @@
 // 长按菜单 - 翻译
 #define WKPOINT_LONGMENUS_TRANSLATE @"longmenus.translate"
 
+// 创建话题（群 / 私聊·bot）
+#define WKPOINT_LONGMENUS_CREATE_TOPIC @"longmenus.createTopic"
+// 管理话题（父群 / 私聊）
+#define WKPOINT_LONGMENUS_MANAGE_TOPICS @"longmenus.manageTopics"
+// 话题内打开所属群 / 私聊
+#define WKPOINT_LONGMENUS_OPEN_TOPIC_PARENT @"longmenus.openTopicParent"
+
 
 
 // ---------- 消息扩展 ----------
@@ -293,7 +300,7 @@
 #define WKNOTIFY_MODULE_CHANGE @"lim.module.change"
 // 聊天背景改变
 #define WKNOTIFY_CHATBACKGROUND_CHANGE @"lim.chatbackground.change"
-// 品牌主题色改变（荧光橙 / 荧光蓝）
+// 品牌主题色改变（石青 / 玄青 / 松烟 / 雾蓝）
 #define WKNOTIFY_BRAND_THEME_CHANGE @"lim.brand.theme.change"
 #define WKNOTIFY_TRANSLATE_UPDATE @"lim.translate.update"
 // 频道头像更新

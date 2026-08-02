@@ -11,6 +11,7 @@ import {
   getMessageTextFormat,
   getMessageTextHtml,
 } from "../HtmlText";
+import { translateManager } from "../../Service/TranslateManager";
 import "./index.css"
 
 
@@ -38,7 +39,7 @@ export class TextCell extends MessageCell {
             if(part.data?.uid) {
                 context.showUser(part.data?.uid)
             }
-        }} key={`${message.clientMsgNo}-mention-${k}`} className={classNames("wk-message-text-richmention", message.send ? "wk-message-text-send" : "wk-message-text-recv")}>{part.text}</span>
+        }} key={`${message.clientMsgNo}-mention-${k}`} className="wk-message-text-richmention">{part.text}</span>
     }
 
     getEmojiText(k: number, part: Part) {
@@ -116,6 +117,30 @@ export class TextCell extends MessageCell {
                 ) : (
                     this.getRenderMessageText()
                 )}
+                {(() => {
+                    const translated =
+                      translateManager.translationAttachedToMessage(message)
+                    const hidden =
+                      translateManager.isTranslationHiddenForMessage(message)
+                    const loading =
+                      translateManager.isTranslationLoading(message)
+                    if (loading) {
+                        return (
+                            <div className="wk-message-text-translate wk-message-text-translate-loading">
+                                翻译中…
+                            </div>
+                        )
+                    }
+                    if (!translated || hidden) return null
+                    const plain = translateManager.plainTextFromMessage(message)
+                    if (translated === plain) return null
+                    return (
+                        <div className="wk-message-text-translate">
+                            <div className="wk-message-text-translate-split" />
+                            <div className="wk-message-text-translate-body">{translated}</div>
+                        </div>
+                    )
+                })()}
                 <MessageTrail message={message} />
             </div>
         </MessageBase>

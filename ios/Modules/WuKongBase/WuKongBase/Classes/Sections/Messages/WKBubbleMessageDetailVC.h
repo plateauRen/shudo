@@ -25,6 +25,15 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)detailWithTitle:(nullable NSString *)title selectableText:(NSString *)text;
 + (NSString *)plainTextFromTableContent:(WKHermesTableContent *)content;
 
+/// HTML `<table>` for pasteboard (rich editor / Excel prefer this over TSV alone).
++ (NSString *)htmlFromTableContent:(WKHermesTableContent *)content;
+
+/// Convert HTML (rich messages) to clipboard plain text, keeping tables as TSV.
++ (NSString *)plainTextFromMessageHTML:(NSString *)html;
+
+/// Write plain + optional HTML so paste into 叙叨 rich composer keeps table structure.
++ (void)writePasteboardPlain:(NSString *)plain html:(nullable NSString *)html;
+
 @end
 
 NS_ASSUME_NONNULL_END

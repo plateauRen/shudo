@@ -1,4 +1,4 @@
-import { ChannelQrcodeResp, Contacts, IChannelDataSource, ICommonDataSource, WKApp, RequestConfig, GroupRole } from "@tsdaodao/base";
+import { ChannelQrcodeResp, Contacts, IChannelDataSource, ICommonDataSource, WKApp, RequestConfig, GroupRole, shudoOrgManager } from "@tsdaodao/base";
 import { Channel, ChannelInfo, ChannelTypeGroup, ChannelTypePerson, WKSDK, Message, MessageContentType,ConversationExtra,Subscriber } from "wukongimjssdk";
 
 export class ChannelDataSource implements IChannelDataSource {
@@ -63,11 +63,25 @@ export class ChannelDataSource implements IChannelDataSource {
             data: {
                 members: uids,
             }
+        }).then(() => {
+            // Mirror kick into active sub-channels (parent → children)
+            if (!shudoOrgManager.getSubChannelMeta(channel.channelID)) {
+                shudoOrgManager.syncSubChannelMembers(channel.channelID).catch(() => {
+                    /* org service optional */
+                })
+            }
         })
     }
     addSubscribers(channel: Channel, uids: string[]): Promise<void> {
         return WKApp.apiClient.post(`groups/${channel.channelID}/members`, {
             members: uids,
+        }).then(() => {
+            // Only sync when operating on a parent group (not a topic itself)
+            if (!shudoOrgManager.getSubChannelMeta(channel.channelID)) {
+                shudoOrgManager.syncSubChannelMembers(channel.channelID).catch(() => {
+                    /* org service optional */
+                })
+            }
         })
     }
 
@@ -302,6 +316,10 @@ export class CommonDataSource implements ICommonDataSource {
                 let channelInfo = new ChannelInfo();
                 channelInfo.channel = new Channel(data.uid, ChannelTypePerson);
                 channelInfo.title = data.name;
+                const systemName = WKApp.config.systemAccountDisplayName(data.uid);
+                if (systemName) {
+                    channelInfo.title = systemName;
+                }
                 channelInfo.logo = WKApp.shared.avatarChannel(channelInfo.channel);
                 channelInfo.mute = data.mute === 1;
                 channelInfo.top = data.top === 1;
@@ -312,7 +330,7 @@ export class CommonDataSource implements ICommonDataSource {
                 if (channelInfo.orgData.remark && channelInfo.orgData.remark !== "") {
                     channelInfo.orgData.displayName = channelInfo.orgData.remark;
                 } else {
-                    channelInfo.orgData.displayName = channelInfo.title;
+                    channelInfo.orgData.displayName = systemName || channelInfo.title;
                 }
 
                 channelInfos.push(channelInfo);

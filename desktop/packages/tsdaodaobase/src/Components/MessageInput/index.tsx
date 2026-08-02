@@ -8,8 +8,7 @@ import hotkeys from 'hotkeys-js';
 import WKApp from "../../App";
 import "./index.css"
 import InputStyle from "./defaultStyle";
-import {IconSend} from '@douyinfe/semi-icons';
-import { Notification, Button } from '@douyinfe/semi-ui';
+import { Notification } from '@douyinfe/semi-ui';
 
 export type OnInsertFnc = (text: string) => void
 export type OnAddMentionFnc = (uid: string, name: string) => void
@@ -300,71 +299,89 @@ export default class MessageInput extends Component<MessageInputProps, MessageIn
                         </div>
                     </div>
                 </div>
-                <div className="wk-messageinput-inputbox" >
-                    <div className="wk-messageinput-input-wrap">
-                        <MentionsInput
-                            style={InputStyle.getStyle()}
-                            value={value}
-                            onKeyPress={e => this.handleKeyPressed.bind(this)(e)}
-                            onChange={this.handleChange.bind(this)}
-                            className="wk-messageinput-input"
-                            placeholder={`按 Ctrl + Enter 换行，按 Enter 发送`}
-                            allowSuggestionsAboveCursor={true}
-                            inputRef={(ref: any) => {
-                                this.inputRef = ref
-                                if (onInputRef) {
-                                    onInputRef(ref)
-                                }
-                            }}
-                        >
-                            <Mention
-                                className="mentions__mention"
-                                trigger={new RegExp(
-                                    `(@([^'\\s'@]*))$`
-                                )}
-                                data={selectedItems}
-                                markup="@[__display__]"
-                                displayTransform={(id, display) => `@${display}`}
-                                appendSpaceOnAdd={true}
-                                onAdd={(id, display) => {
-                                    mentionCache[display] = { uid: id, name: display }
+                <div className="wk-messageinput-shell">
+                    <div className="wk-messageinput-field">
+                        <div className="wk-messageinput-input-wrap">
+                            <MentionsInput
+                                style={InputStyle.getStyle()}
+                                value={value}
+                                onKeyPress={e => this.handleKeyPressed.bind(this)(e)}
+                                onChange={this.handleChange.bind(this)}
+                                className="wk-messageinput-input"
+                                placeholder={`按 Ctrl + Enter 换行，按 Enter 发送`}
+                                allowSuggestionsAboveCursor={true}
+                                inputRef={(ref: any) => {
+                                    this.inputRef = ref
+                                    if (onInputRef) {
+                                        onInputRef(ref)
+                                    }
                                 }}
-                                renderSuggestion={(
-                                    suggestion,
-                                    search,
-                                    highlightedDisplay,
-                                    index,
-                                    focused
-                                ) => {
-                                    return (
-                                        <div className={clazz("wk-messageinput-member", focused ? "wk-messageinput-selected" : null)}>
-                                            <div className="wk-messageinput-iconbox">
-                                                <img alt="" className="wk-messageinput-icon" style={{ width: `24px`, height: `24px`, borderRadius: `24px` }} src={(suggestion as MemberSuggestionDataItem).icon} />
-                                            </div>
-                                            <div><strong>{highlightedDisplay}</strong></div>
-                                        </div>
-                                    )
-                                }}
-                            />
-                        </MentionsInput>
-                        {onOpenRichComposer ? (
-                            <button
-                                type="button"
-                                className="wk-messageinput-expand"
-                                title="展开富文本编辑"
-                                aria-label="展开富文本编辑"
-                                onClick={onOpenRichComposer}
                             >
-                                {/* Feishu-style expand (↗↙) */}
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M14 4h6v6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M10 20H4v-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M20 4L13 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-                                    <path d="M4 20l7-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-                                </svg>
-                            </button>
-                        ) : null}
+                                <Mention
+                                    className="mentions__mention"
+                                    trigger={new RegExp(
+                                        `(@([^'\\s'@]*))$`
+                                    )}
+                                    data={selectedItems}
+                                    markup="@[__display__]"
+                                    displayTransform={(id, display) => `@${display}`}
+                                    style={{
+                                        position: "relative",
+                                        zIndex: 1,
+                                        color: "var(--wk-color-theme)",
+                                        fontWeight: 400,
+                                    }}
+                                    appendSpaceOnAdd={true}
+                                    onAdd={(id, display) => {
+                                        mentionCache[display] = { uid: id, name: display }
+                                    }}
+                                    renderSuggestion={(
+                                        suggestion,
+                                        search,
+                                        highlightedDisplay,
+                                        index,
+                                        focused
+                                    ) => {
+                                        return (
+                                            <div className={clazz("wk-messageinput-member", focused ? "wk-messageinput-selected" : null)}>
+                                                <div className="wk-messageinput-iconbox">
+                                                    <img alt="" className="wk-messageinput-icon" style={{ width: `24px`, height: `24px`, borderRadius: `24px` }} src={(suggestion as MemberSuggestionDataItem).icon} />
+                                                </div>
+                                                <div><strong>{highlightedDisplay}</strong></div>
+                                            </div>
+                                        )
+                                    }}
+                                />
+                            </MentionsInput>
+                        </div>
                     </div>
+                    {onOpenRichComposer ? (
+                        <button
+                            type="button"
+                            className="wk-messageinput-expand"
+                            title="展开富文本编辑"
+                            aria-label="展开富文本编辑"
+                            onClick={onOpenRichComposer}
+                        >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M14 4h6v6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M10 20H4v-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M20 4L13 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                                <path d="M4 20l7-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                            </svg>
+                        </button>
+                    ) : null}
+                    <button
+                        type="button"
+                        className={clazz("wk-messageinput-sendbtn", hasValue ? "wk-messageinput-hasValue" : null)}
+                        onClick={() => { if (hasValue) this.send() }}
+                        title="发送 (Enter)"
+                        aria-label="发送"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M3.4 20.4l17.45-7.48a1 1 0 000-1.84L3.4 3.6a.99.99 0 00-1.39.91l.7 6.05a1 1 0 00.8.87l8.34 1.57-8.34 1.57a1 1 0 00-.8.87l-.7 6.05a.99.99 0 001.39.91z"/>
+                        </svg>
+                    </button>
                 </div>
 
             </div>

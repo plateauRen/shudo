@@ -13,6 +13,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic,copy) NSString *placeholder;
 
+/// When YES, icon + placeholder hug the leading edge (nav-bar compact search).
+@property(nonatomic,assign) BOOL leadingContent;
 
 /// 搜索被点击
 @property(nonatomic,copy) void(^onClick)(void);

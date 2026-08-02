@@ -20,6 +20,7 @@
 #import "WKThemeUtil.h"
 #import "WKHermesAudioBar.h"
 #import "WKHermesAudioCell.h"
+#import "WKRichEditorPool.h"
 @interface WKConversationVC ()<WKChannelManagerDelegate>
 
 @property(nonatomic,strong) WKConversationView *conversationView;
@@ -208,6 +209,16 @@
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
     [self.conversationView viewDidAppear];
+#if !TARGET_OS_SIMULATOR
+    // Device only: warm TipTap after chat UI settles. Simulator WebKit + inline JS
+    // makes early prewarm feel like a multi-second freeze on launch/home.
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [[WKRichEditorPool shared] prewarm];
+        });
+    });
+#endif
 }
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];

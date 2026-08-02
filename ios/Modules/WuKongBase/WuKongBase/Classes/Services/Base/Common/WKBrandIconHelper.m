@@ -38,7 +38,7 @@
 
     UIColor *fill = [WKApp shared].config.themeColor;
     if (!fill) {
-        fill = [UIColor colorWithRed:1.0 green:0x45 / 255.0 blue:0 alpha:1.0];
+        fill = [UIColor colorWithRed:0x0E / 255.0 green:0x74 / 255.0 blue:0x90 / 255.0 alpha:1.0]; // #0E7490 石青
     }
     if (@available(iOS 13.0, *)) {
         fill = [fill resolvedColorWithTraitCollection:UITraitCollection.currentTraitCollection];

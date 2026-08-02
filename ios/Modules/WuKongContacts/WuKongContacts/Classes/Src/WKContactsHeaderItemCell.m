@@ -8,6 +8,8 @@
 #import "WKContactsHeaderItemCell.h"
 #import "WKBadgeView.h"
 #import <WuKongBase/WKBrandIconHelper.h>
+#import <WuKongBase/WKLiquidGlassHelper.h>
+#import <WuKongBase/WKApp.h>
 @interface WKContactsHeaderItemCell ()
 
 @property(nonatomic,strong) WKImageView *icon; // 图标
@@ -42,7 +44,11 @@
 -(void)refresh:(WKContactsHeaderItem*)model {
     [super refresh:model];
     
-    [self setBackgroundColor:[WKApp shared].config.cellBackgroundColor];
+    if ([WKLiquidGlassHelper isLiquidGlassAvailable]) {
+        [self setBackgroundColor:[[WKApp shared].config.cellBackgroundColor colorWithAlphaComponent:0.72]];
+    } else {
+        [self setBackgroundColor:[WKApp shared].config.cellBackgroundColor];
+    }
     
     [self.titleLbl setTextColor:[WKApp shared].config.defaultTextColor];
     

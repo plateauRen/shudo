@@ -159,12 +159,12 @@
 
 - (void)layoutSubviews {
     [super layoutSubviews];
-    if(self.startScroll) {
-        // self.oldFrame.size.height -(self.oldFrame.size.height*self.scaleZoom)
-        self.frame = CGRectMake(0.0f, self.lim_top,  self.oldFrame.size.width, self.oldFrame.size.height*self.scaleZoom);
-    }else {
-        self.frame = CGRectMake(0.0f, self.lim_top, self.oldFrame.size.width, self.oldFrame.size.height);
+    CGFloat width = self.frame.size.width > 1.0f ? self.frame.size.width : self.oldFrame.size.width;
+    if (fabs(width - self.oldFrame.size.width) > 0.5f) {
+        self.oldFrame = CGRectMake(self.oldFrame.origin.x, self.oldFrame.origin.y, width, self.oldFrame.size.height);
     }
+    CGFloat height = self.startScroll ? (self.oldFrame.size.height * self.scaleZoom) : self.oldFrame.size.height;
+    self.frame = CGRectMake(self.frame.origin.x, self.lim_top, width, height);
     if(self.onLayout) {
         self.onLayout();
     }

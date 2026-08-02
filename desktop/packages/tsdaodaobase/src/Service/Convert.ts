@@ -3,6 +3,7 @@ import { Setting } from "wukongimjssdk";
 import { WKSDK, ChannelInfo, Channel, Conversation, Message, MessageStatus, ChannelTypePerson, ChannelTypeGroup,ConversationExtra,Reminder, MessageExtra } from "wukongimjssdk";
 import { unwrapHermesPayload } from "./HermesPayload";
 import { MessageContentTypeConst } from "./Const";
+import { systemAccountDisplayName } from "./SystemAccount";
 
 
 export class Convert {
@@ -83,7 +84,7 @@ export class Convert {
         const contentObj = msgMap["payload"]
         let contentType = 0
         if (contentObj) {
-            // Robot type=1 envelopes → Hermes 21000/21001
+            // Robot type=1 envelopes → Hermes 21000–21003
             unwrapHermesPayload(contentObj)
             contentType = contentObj.type
         }
@@ -150,7 +151,11 @@ export class Convert {
         channelInfo.orgData = data.extra || {};
         channelInfo.orgData = { ...channelInfo.orgData, ...data }
         channelInfo.orgData.remark = data.remark ?? "";
-        channelInfo.orgData.displayName = data.remark && data.remark !== "" ? data.remark : channelInfo.title;
+        const systemName = systemAccountDisplayName(data.uid);
+        if (systemName) {
+            channelInfo.title = systemName;
+        }
+        channelInfo.orgData.displayName = data.remark && data.remark !== "" ? data.remark : (systemName || channelInfo.title);
         channelInfo.orgData.shortNo = data.short_no ?? ""
 
         channelInfo.logo = data.logo

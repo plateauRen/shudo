@@ -36,11 +36,10 @@
 }
 
 .senderName {
-    color: rgba(9,30,66,.74);
+    color: var(--wk-text-tertiary);
     font-size: 12px;
     font-weight: 400;
-    /* text-transform: capitalize; */
-    padding-bottom: 1px;
+    padding-bottom: 2px;
 }
 
 .senderAvatar {
@@ -49,13 +48,14 @@
     cursor: pointer;
     position: absolute;
     left: 0;
-    bottom: 5px;
+    bottom: 4px;
 }
 
 .senderAvatar img {
     width: 34px;
     height: 34px;
-    border-radius: 40%;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
 .wk-message-base-box {
@@ -94,18 +94,19 @@
 }
 
 .wk-message-base-bubble {
-    color: rgba(9,30,66,.87);
+    color: var(--wk-message-color);
     display: flex;
-    /* margin-bottom: 4px; */
-    padding: 8px 10px;
+    padding: 9px 12px;
     position: relative;
     word-wrap: break-word;
     max-width: var(--wk-width-max-message);
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    box-shadow: 0 1px 2px rgba(114,114,114,0.25098);
+    box-shadow: none;
+    border: 1px solid transparent;
     font-size: 15px;
+    line-height: 1.45;
 }
 
 .wk-message-base-bubble-box.hide .wk-message-base-bubble {
@@ -123,49 +124,63 @@ body[theme-mode=dark] .wk-message-base-bubble {
 }
 
 .wk-message-base-bubble-box.send .wk-message-base-bubble {
-    background-color: var(--wk-color-message-send, #D6E4FF);
-    border-radius: 0.75rem 0.75rem 0rem 0.75rem;
-    color: var(--wk-color-message-send-text, #1F2329);
+    background-color: var(--wk-color-message-send);
+    border-radius: var(--wk-radius-md) var(--wk-radius-md) var(--wk-radius-sm) var(--wk-radius-md);
+    color: var(--wk-color-message-send-text);
+    border-color: transparent;
 }
 
 .wk-message-base-bubble-box.recv .wk-message-base-bubble {
-    border-radius: 0.75rem 0.75rem 0.75rem 0rem;
-    background-color: white ;
-    color: black;
+    border-radius: var(--wk-radius-md) var(--wk-radius-md) var(--wk-radius-md) var(--wk-radius-sm);
+    background-color: var(--wk-message-item);
+    color: var(--wk-message-color);
+    border-color: var(--wk-border-subtle);
 }
 
 body[theme-mode=dark] .wk-message-base-bubble-box.recv .wk-message-base-bubble  {
-    color: white;
+    color: var(--wk-message-color);
 }
 
 body[theme-mode=dark] .wk-message-base-bubble-box.recv .wk-message-base-bubble {
-    background-color: var(--wk-color-secondary);
+    background-color: var(--wk-message-item);
+    border-color: var(--wk-border);
 }
 
 .wk-message-base-bubble-box.send.middle .wk-message-base-bubble {
-    border-radius: 0.75rem 0.375rem 0.375rem 0.75rem;
+    border-radius: var(--wk-radius-md) var(--wk-radius-sm) var(--wk-radius-sm) var(--wk-radius-md);
 }
 
 .wk-message-base-bubble-box.send.first .wk-message-base-bubble {
-    border-radius: 0.75rem 0.75rem 0.375rem 0.75rem;
+    border-radius: var(--wk-radius-md) var(--wk-radius-md) var(--wk-radius-sm) var(--wk-radius-md);
+}
+
+.wk-message-base-bubble-box.send.last .wk-message-base-bubble,
+.wk-message-base-bubble-box.send.single .wk-message-base-bubble {
+    border-radius: var(--wk-radius-md) var(--wk-radius-md) var(--wk-radius-sm) var(--wk-radius-md);
 }
 
 .wk-message-base-bubble-box.recv.middle .wk-message-base-bubble {
-    border-radius: 0.375rem 0.75rem 0.75rem 0.375rem;
+    border-radius: var(--wk-radius-sm) var(--wk-radius-md) var(--wk-radius-md) var(--wk-radius-sm);
 }
 
 .wk-message-base-bubble-box.recv.first .wk-message-base-bubble {
-    border-radius: 0.75rem 0.75rem 0.75rem 0.375rem;
+    border-radius: var(--wk-radius-md) var(--wk-radius-md) var(--wk-radius-md) var(--wk-radius-sm);
 }
 
-.wk-message-base-bubble-box.hide .wk-message-base-bubble {
-    background-color: transparent !important;
-    box-shadow: none;
+.wk-message-base-bubble-box.recv.last .wk-message-base-bubble,
+.wk-message-base-bubble-box.recv.single .wk-message-base-bubble {
+    border-radius: var(--wk-radius-md) var(--wk-radius-md) var(--wk-radius-md) var(--wk-radius-sm);
+}
+
+.wk-message-base-bubble-box.fileBox .wk-message-base-bubble {
+    min-width: 220px;
+    padding: 10px 12px;
+    align-items: stretch;
 }
 
 
 .svgAppendix {
-    display: none;
+    display: none !important;
     overflow: hidden;
     position: absolute;
     width: 0.5625rem;
@@ -176,11 +191,11 @@ body[theme-mode=dark] .wk-message-base-bubble-box.recv .wk-message-base-bubble {
 
 
 .wk-message-base-bubble-box.last .svgAppendix {
-    display: block;
+    display: none;
 }
 
 .wk-message-base-bubble-box.single .svgAppendix {
-    display: block;
+    display: none;
 }
 
 
@@ -367,11 +382,11 @@ body[theme-mode=dark] .wk-message-base-bubble-box.recv .svgAppendix .corner  {
 }
 
 .wk-message-base-bubble-box.recv .messageTime {
-    color: rgb(104, 108, 114,0.75);
+    color: var(--wk-text-tertiary);
 }
 
 .wk-message-base-bubble-box.send .messageTime {
-    color: var(--wk-color-font-tip, #8F959E);
+    color: var(--wk-text-tertiary);
 }
 
 .textTitle {

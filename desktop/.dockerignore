@@ -1,4 +1,15 @@
 node_modules
+**/node_modules
 .git
 .gitignore
 Dockerfile
+**/.DS_Store
+apps/**/release
+apps/**/dist
+**/*.log
+.cache
+**/coverage
+**/.turbo
+electron
+*.md
+!README.md

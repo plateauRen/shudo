@@ -7,6 +7,7 @@
 
 #import "WKTabbar.h"
 #import "WuKongBase/WuKongBase.h"
+#import "WKLiquidGlassHelper.h"
 
 #define titleLabelTag 1000
 #define defaultColor [UIColor colorWithRed:120.0f/255.0f green:120.0f/255.0f blue:120.0f/255.0f alpha:1.0f] // 默认颜色
@@ -43,7 +44,9 @@
     self = [super initWithFrame:CGRectMake(0.0f, 0.0f, width, 32.0f)];
     if (self) {
         self.items = items;
-        self.backgroundColor = WKApp.shared.config.backgroundColor;
+        self.backgroundColor = [WKLiquidGlassHelper isLiquidGlassAvailable]
+            ? [UIColor clearColor]
+            : WKApp.shared.config.backgroundColor;
         [self addSubview:self.indicatorView];
         [self addSubview:self.scrollView];
         

@@ -6,6 +6,7 @@ import { ProviderListener } from "../../Service/Provider";
 import { animateScroll, scroller } from 'react-scroll';
 import { EndpointID, MessageContentTypeConst, OrderFactor } from "../../Service/Const";
 import { rehydrateHermesMessage, shouldHideHermesMessage } from "../../Service/HermesMessage";
+import { translateManager } from "../../Service/TranslateManager";
 import moment from 'moment'
 import { TimeContent } from "../../Messages/Time";
 import { HistorySplitContent } from "../../Messages/HistorySplit";
@@ -46,6 +47,7 @@ export default class ConversationVM extends ProviderListener {
     lastLocalMessageElement?: HTMLElement | null // 最后一条消息的dom元素
     private _showScrollToBottomBtn?: boolean = false // 是否显示底部按钮
     subscribers: Subscriber[] = []
+    private _unsubTranslate?: () => void
 
     fileDragEnter?: boolean // 文件拖拽上传（拖进来了）
     fileDragLeave?: boolean // 文件拖拽上传（拖离开了）
@@ -303,8 +305,15 @@ export default class ConversationVM extends ProviderListener {
             const messageWrap = new MessageWrap(message)
             this.fillOrder(messageWrap)
             this.appendMessage(messageWrap)
+            if (translateManager.shouldAutoTranslateMessage(messageWrap)) {
+                translateManager.translateMessage(messageWrap).catch(() => undefined)
+            }
         }
         WKSDK.shared().chatManager.addMessageListener(this.messageListener)
+
+        this._unsubTranslate = translateManager.subscribe(() => {
+            this.notifyListener()
+        })
 
         // cmd监听
         this.cmdListener = (message: Message) => {
@@ -421,6 +430,10 @@ export default class ConversationVM extends ProviderListener {
 
         TypingManager.shared.removeTypingListener(this.typingListener)
         WKSDK.shared().conversationManager.removeConversationListener(this.conversationListener)
+        if (this._unsubTranslate) {
+            this._unsubTranslate()
+            this._unsubTranslate = undefined
+        }
 
     }
 

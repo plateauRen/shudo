@@ -3,14 +3,17 @@
  *   ::hermes_card::{json}  → 21000
  *   ::hermes_action::a:id → 21001
  *   ::hermes_table::{json} → 21002
+ *   ::hermes_audio::{json} → 21003
  */
 
 export const HERMES_CARD_MARKER = "::hermes_card::";
 export const HERMES_ACTION_MARKER = "::hermes_action::";
 export const HERMES_TABLE_MARKER = "::hermes_table::";
+export const HERMES_AUDIO_MARKER = "::hermes_audio::";
 export const HERMES_CARD_TYPE = 21000;
 export const HERMES_ACTION_TYPE = 21001;
 export const HERMES_TABLE_TYPE = 21002;
+export const HERMES_AUDIO_TYPE = 21003;
 
 function displayLabelForAction(action: string, preferred?: string): string {
   if (preferred && preferred.trim()) return preferred.trim();
@@ -68,6 +71,11 @@ export function unwrapHermesPayload(payload: any): boolean {
   }
   if (
     unwrapJsonMarker(payload, text, HERMES_TABLE_MARKER, HERMES_TABLE_TYPE, "[表格]")
+  ) {
+    return true;
+  }
+  if (
+    unwrapJsonMarker(payload, text, HERMES_AUDIO_MARKER, HERMES_AUDIO_TYPE, "[音频]")
   ) {
     return true;
   }

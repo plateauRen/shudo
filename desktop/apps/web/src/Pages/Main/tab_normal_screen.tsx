@@ -1,4 +1,4 @@
-import { WKApp, Menus, ThemeMode, MeInfo } from "@tsdaodao/base";
+import { WKApp, Menus, MeInfo, TranslateSettingModal, ThemeSettingModal } from "@tsdaodao/base";
 import classnames from "classnames";
 import React from "react";
 import { Component } from "react";
@@ -10,7 +10,20 @@ export interface TabNormalScreenProps {
   vm: MainVM;
 }
 
-export class TabNormalScreen extends Component<TabNormalScreenProps> {
+export class TabNormalScreen extends Component<
+  TabNormalScreenProps,
+  {
+    showTranslateSetting?: boolean;
+    showThemeSetting?: boolean;
+  }
+> {
+  constructor(props: TabNormalScreenProps) {
+    super(props);
+    this.state = {
+      showTranslateSetting: false,
+      showThemeSetting: false,
+    };
+  }
   componentDidMount() {
     WKApp.menus.setRefresh = () => {
       this.setState({});
@@ -18,6 +31,7 @@ export class TabNormalScreen extends Component<TabNormalScreenProps> {
   }
   render() {
     const { vm } = this.props;
+    const { showTranslateSetting, showThemeSetting } = this.state;
     return (
       <div className="wk-main-sider">
         <ul className="wk-main-sider-content">
@@ -47,9 +61,13 @@ export class TabNormalScreen extends Component<TabNormalScreenProps> {
             ></img>
           </li>
           {vm.menusList.map((menus: Menus) => {
+            const isSelected = menus.id === vm.currentMenus?.id;
             return (
               <li
-                className="wk-main-sider-item"
+                className={classnames(
+                  "wk-main-sider-item",
+                  isSelected ? "wk-main-sider-item-selected" : undefined
+                )}
                 title={menus.title}
                 key={menus.id}
                 onClick={() => {
@@ -67,9 +85,7 @@ export class TabNormalScreen extends Component<TabNormalScreenProps> {
                     <Badge count={menus.badge} type="danger"></Badge>
                   </div>
                 ) : undefined}
-                {menus.id === vm.currentMenus?.id
-                  ? menus.selectedIcon
-                  : menus.icon}
+                {isSelected ? menus.selectedIcon : menus.icon}
               </li>
             );
           })}
@@ -108,14 +124,19 @@ export class TabNormalScreen extends Component<TabNormalScreenProps> {
           <li
             onClick={() => {
               vm.settingSelected = false;
-              if (WKApp.config.themeMode === ThemeMode.dark) {
-                WKApp.config.themeMode = ThemeMode.light;
-              } else {
-                WKApp.config.themeMode = ThemeMode.dark;
-              }
+              this.setState({ showThemeSetting: true });
             }}
-          >{`${WKApp.config.themeMode === ThemeMode.dark ? "关闭" : "打开"
-            }黑暗模式`}</li>
+          >
+            主题设置
+          </li>
+          <li
+            onClick={() => {
+              vm.settingSelected = false;
+              this.setState({ showTranslateSetting: true });
+            }}
+          >
+            翻译设置
+          </li>
           <li
             onClick={() => {
               vm.settingSelected = false;
@@ -151,6 +172,15 @@ export class TabNormalScreen extends Component<TabNormalScreenProps> {
             退出登录
           </li>
         </ul>
+
+        <ThemeSettingModal
+          visible={Boolean(showThemeSetting)}
+          onClose={() => this.setState({ showThemeSetting: false })}
+        />
+        <TranslateSettingModal
+          visible={Boolean(showTranslateSetting)}
+          onClose={() => this.setState({ showTranslateSetting: false })}
+        />
 
         <Modal
           title="检测到新版本信息"

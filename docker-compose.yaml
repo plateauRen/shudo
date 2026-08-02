@@ -74,8 +74,40 @@ services:
       retries: 8
       start_period: 20s
 
+  # Folders + sub-channels (POST/GET /v1/shudo/...)
+  shudo-org:
+    build: ./services/shudo-org
+    platform: linux/amd64
+    restart: always
+    ports:
+      - "8092:8092"
+    environment:
+      - TS_API_URL=http://tangsengdaodaoserver:8090/v1
+      - TS_WUKONGIM_APIURL=http://wukongim:5001
+      - TS_DB_MYSQLADDR=root:${MYSQL_ROOT_PASSWORD}@tcp(mysql)/${MYSQL_DATABASE}?charset=utf8mb4&parseTime=true&loc=Local
+      - TS_DB_REDISADDR=redis:6379
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      tangsengdaodaoserver:
+        condition: service_healthy
+      wukongim:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8092/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 20s
+
+  # 叙叨 Web：本机先 `cd desktop && yarn build`，再用轻量 nginx 镜像打包（避免多阶段拉 node 过慢）
   tangsengdaodaoweb:
-    image: registry.cn-shanghai.aliyuncs.com/wukongim/tangsengdaodaoweb:latest
+    build:
+      context: ./desktop
+      dockerfile: Dockerfile.ghcr
+    image: shudo-web:local
     platform: linux/amd64
     restart: always
     environment:
@@ -94,6 +126,9 @@ services:
       - API_URL=http://tangsengdaodaoserver:8090/
     ports:
       - "83:80"
+    # Image ships APP_URL=https://api.botgate.cn/v1/ — override for local stack.
+    volumes:
+      - ./deploy/web/tsdd-manager-config.js:/usr/share/nginx/html/tsdd-config.js:ro
     depends_on:
       tangsengdaodaoserver:
         condition: service_healthy

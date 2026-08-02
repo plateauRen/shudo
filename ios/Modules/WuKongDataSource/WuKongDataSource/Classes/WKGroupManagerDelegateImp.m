@@ -7,7 +7,21 @@
 
 #import "WKGroupManagerDelegateImp.h"
 #import "WKDataSourceModel.h"
+#import "WKShudoOrgManager.h"
 @implementation WKGroupManagerDelegateImp
+
+/// 父群加人/踢人后，镜像到活跃话题（话题本身不作为 parent 同步）
+- (void)shudoSyncSubChannelsIfParent:(NSString *)groupNo {
+    if (!groupNo.length) return;
+    if ([[WKShudoOrgManager shared] subChannelMeta:groupNo]) {
+        return;
+    }
+    [[WKShudoOrgManager shared] syncSubChannelMembers:groupNo complete:^(NSError *error) {
+        if (error) {
+            WKLogError(@"同步话题成员失败 group=%@ err=%@", groupNo, error);
+        }
+    }];
+}
 
 
 // 创建群聊
@@ -32,7 +46,9 @@
 // 添加群成员
 - (void)groupManager:(nonnull WKGroupManager *)manager groupNo:(nonnull NSString *)groupNo membersOfAdd:(nonnull NSArray<NSString *> *)members object:(id _Nullable)object complete:(void (^ _Nullable)(NSError * __nullable))complete {
     NSMutableArray *names = [NSMutableArray array];
+    __weak typeof(self) weakSelf = self;
     [[WKAPIClient sharedClient] POST:[NSString stringWithFormat:@"groups/%@/members",groupNo] parameters:@{@"members":members?:@[],@"names":names}].then(^{
+        [weakSelf shudoSyncSubChannelsIfParent:groupNo];
         if(complete) {
             complete(nil);
         }
@@ -46,7 +62,9 @@
 // 删除群成员
 - (void)groupManager:(nonnull WKGroupManager *)manager groupNo:(nonnull NSString *)groupNo membersOfDelete:(nonnull NSArray<NSString *> *)members object:(id _Nullable)object complete:(void (^ _Nullable)(NSError * __nullable))complete {
     NSMutableArray *names = [NSMutableArray array];
+    __weak typeof(self) weakSelf = self;
     [[WKAPIClient sharedClient] DELETE:[NSString stringWithFormat:@"groups/%@/members",groupNo] parameters:@{@"members":members?:@[],@"names":names}].then(^{
+        [weakSelf shudoSyncSubChannelsIfParent:groupNo];
         if(complete) {
             complete(nil);
         }

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
+  <title>叙叨 · I 窗格 · mono</title>
+  <rect x="128" y="128" width="110" height="110" rx="28"/>
+  <rect x="274" y="128" width="110" height="110" rx="28" opacity="0.55"/>
+  <rect x="128" y="274" width="110" height="110" rx="28" opacity="0.55"/>
+  <rect x="274" y="274" width="110" height="110" rx="28" opacity="0.9"/>
+</svg>

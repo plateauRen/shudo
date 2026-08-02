@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Shudo Logo U Reply">
+  <title>Shudo U Reply</title>
+  <defs>
+    <linearGradient id="ug" x1="40" y1="460" x2="472" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3B6D9A"/>
+      <stop offset="100%" stop-color="#0E7490"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#ug)"/>
+  <path fill="#ffffff" d="M92 120h328c36 0 64 28 64 64v168c0 36-28 64-64 64H240l-52 50c-10 10-26 2-26-12v-38H92c-36 0-64-28-64-64V184c0-36 28-64 64-64z"/>
+  <!-- nested reply bar -->
+  <rect x="148" y="188" width="216" height="36" rx="12" fill="#0E7490" opacity="0.2"/>
+  <rect x="148" y="244" width="168" height="36" rx="12" fill="#0E7490" opacity="0.35"/>
+  <path fill="#0E7490" d="M148 300h180c14 0 26 12 26 26v8c0 14-12 26-26 26h-92l-28 24c-6 5-16 1-16-7v-17h-44c-14 0-26-12-26-26v-8c0-14 12-26 26-26z"/>
+</svg>

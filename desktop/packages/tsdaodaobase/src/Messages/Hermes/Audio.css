@@ -1,0 +1,142 @@
+.wk-hermes-audio {
+  width: 260px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  box-sizing: border-box;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--wk-color-item, #fff);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.wk-hermes-audio:hover {
+  background: var(--wk-hover, rgba(0, 0, 0, 0.03));
+}
+
+.wk-hermes-audio-playing {
+  border-color: var(--wk-color-theme, #0E7490);
+  box-shadow: 0 0 0 1px rgba(14, 116, 144, 0.12);
+}
+
+body[theme-mode="dark"] .wk-hermes-audio {
+  background: var(--wk-color-item, rgba(255, 255, 255, 0.06));
+}
+
+body[theme-mode="dark"] .wk-hermes-audio:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+body[theme-mode="dark"] .wk-hermes-audio-playing {
+  border-color: var(--wk-color-theme, #38BDF8);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.2);
+}
+
+/* ---- 播放按钮 ---- */
+.wk-hermes-audio-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: var(--wk-color-theme, #0E7490);
+  color: #fff;
+  transition: transform 0.12s ease, box-shadow 0.15s ease;
+}
+
+.wk-hermes-audio-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 2px 8px rgba(14, 116, 144, 0.25);
+}
+
+.wk-hermes-audio-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+
+body[theme-mode="dark"] .wk-hermes-audio-btn {
+  background: var(--wk-color-theme, #38BDF8);
+  color: #0f172a;
+}
+
+body[theme-mode="dark"] .wk-hermes-audio-btn:hover {
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.35);
+}
+
+/* ---- 内容区 ---- */
+.wk-hermes-audio-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.wk-hermes-audio-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.wk-hermes-audio-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--wk-text-primary, #1f2329);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.wk-hermes-audio-dur {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--wk-text-tertiary, #8f959e);
+  white-space: nowrap;
+}
+
+/* ---- 进度条 ---- */
+.wk-hermes-audio-track {
+  margin-top: 8px;
+  height: 3px;
+  width: 100%;
+  border-radius: 2px;
+  background: var(--wk-border, rgba(0, 0, 0, 0.08));
+  overflow: hidden;
+}
+
+body[theme-mode="dark"] .wk-hermes-audio-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.wk-hermes-audio-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--wk-color-theme, #0E7490);
+  transition: width 0.3s linear;
+}
+
+body[theme-mode="dark"] .wk-hermes-audio-fill {
+  background: var(--wk-color-theme, #38BDF8);
+}
+
+/* ---- 禁用 ---- */
+.wk-hermes-audio-disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.wk-hermes-audio-disabled:hover {
+  background: var(--wk-color-item, #fff);
+}

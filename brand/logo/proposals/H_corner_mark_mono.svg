@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
+  <title>叙叨 · H 叙点 · mono</title>
+  <path d="M236 120 C252 120 268 128 268 150 V300 C268 330 248 348 220 348 C200 348 186 336 186 318 C186 300 200 292 216 296 C228 300 236 292 236 278 V150 C236 132 236 120 236 120Z"/>
+  <path d="M186 210 H300" stroke="currentColor" stroke-width="26" stroke-linecap="round" fill="none"/>
+  <circle cx="330" cy="348" r="28"/>
+</svg>

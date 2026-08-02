@@ -217,4 +217,43 @@
 //    return [[WKResource shared] resourceForImage:name podName:@"WuKongBase_images"];
 }
 
+- (void)layoutLeadingTitleWithInlineSearchBar:(UIView *)searchBar {
+    if (!searchBar) {
+        return;
+    }
+    // Compact title (not large-title 25pt) so search stays balanced.
+    [self.titleLabel setFont:[[WKApp shared].config appFontOfSizeMedium:17.0f]];
+    self.titleLabel.textAlignment = NSTextAlignmentLeft;
+    [self.titleLabel sizeToFit];
+
+    CGFloat statusHeight = [UIApplication sharedApplication].statusBarFrame.size.height;
+    CGFloat contentH = MAX(0.0f, self.lim_height - statusHeight);
+    CGFloat titleMax = 88.0f;
+    if (self.titleLabel.lim_width > titleMax) {
+        self.titleLabel.lim_width = titleMax;
+    }
+    self.titleLabel.lim_left = 16.0f;
+    self.titleLabel.lim_top = statusHeight + (contentH - self.titleLabel.lim_height) / 2.0f;
+
+    UIView *right = self.rightView;
+    BOOL hasRight = right && right.superview && right.lim_width > 1.0f;
+    if (hasRight) {
+        right.lim_left = self.lim_width - right.lim_width - 12.0f;
+        right.lim_top = statusHeight + (contentH - right.lim_height) / 2.0f;
+    }
+    CGFloat rightEdge = hasRight ? right.lim_left : (self.lim_width - 16.0f);
+    CGFloat searchH = 32.0f;
+    CGFloat searchLeft = self.titleLabel.lim_right + 12.0f;
+    CGFloat searchRight = rightEdge - 10.0f;
+    CGFloat searchW = MAX(96.0f, searchRight - searchLeft);
+    searchBar.frame = CGRectMake(searchLeft,
+                                 statusHeight + (contentH - searchH) / 2.0f,
+                                 searchW,
+                                 searchH);
+    [self bringSubviewToFront:searchBar];
+    if (hasRight) {
+        [self bringSubviewToFront:right];
+    }
+}
+
 @end

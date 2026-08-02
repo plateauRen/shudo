@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Shudo Logo W Nodes">
+  <title>Shudo W Nodes</title>
+  <defs>
+    <linearGradient id="wg" x1="80" y1="432" x2="432" y2="80" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#155E75"/>
+      <stop offset="100%" stop-color="#0E7490"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#wg)"/>
+  <!-- link bar -->
+  <rect x="168" y="236" width="176" height="40" rx="20" fill="#67E8F9" opacity="0.55"/>
+  <!-- left avatar node -->
+  <circle cx="156" cy="256" r="72" fill="#ffffff"/>
+  <circle cx="156" cy="236" r="22" fill="#0E7490"/>
+  <path fill="#0E7490" d="M116 292c8-28 72-28 80 0 2 8-4 16-14 16h-52c-10 0-16-8-14-16z"/>
+  <!-- right avatar node -->
+  <circle cx="356" cy="256" r="72" fill="#A5F3FC"/>
+  <circle cx="356" cy="236" r="22" fill="#0E7490"/>
+  <path fill="#0E7490" d="M316 292c8-28 72-28 80 0 2 8-4 16-14 16h-52c-10 0-16-8-14-16z"/>
+</svg>

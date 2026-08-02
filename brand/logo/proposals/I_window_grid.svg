@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>叙叨 · 方案 I · 窗格</title>
+  <defs>
+    <linearGradient id="i" x1="60" y1="60" x2="450" y2="450" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7EB0D9"/><stop offset="100%" stop-color="#3B6D9A"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="108" fill="url(#i)"/>
+  <rect x="128" y="128" width="110" height="110" rx="28" fill="#fff"/>
+  <rect x="274" y="128" width="110" height="110" rx="28" fill="#fff" opacity="0.55"/>
+  <rect x="128" y="274" width="110" height="110" rx="28" fill="#fff" opacity="0.55"/>
+  <rect x="274" y="274" width="110" height="110" rx="28" fill="#fff" opacity="0.9"/>
+  <circle cx="329" cy="329" r="18" fill="#3B6D9A"/>
+</svg>

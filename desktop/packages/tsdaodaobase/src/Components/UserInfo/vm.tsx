@@ -140,6 +140,10 @@ export class UserInfoVM extends ProviderListener {
     ) {
       return this.fromSubscriberOfUser.remark;
     }
+    const systemName = WKApp.config.systemAccountDisplayName(this.uid);
+    if (systemName) {
+      return systemName;
+    }
     return this.channelInfo?.title;
   }
 

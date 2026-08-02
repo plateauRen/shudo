@@ -10,10 +10,14 @@ import { animateScroll, scroller } from 'react-scroll';
 import { ProhibitwordsService } from "../../Service/ProhibitwordsService";
 import { EndpointID } from "../../Service/Const";
 import { ShowConversationOptions } from "../../EndpointCommon";
+import { shudoOrgManager } from "../../Service/ShudoOrgManager";
 
 export class ChatVM extends ProviderListener {
     conversations: ConversationWrap[] = new Array()
     loading: boolean = false // 最近会话是否加载中
+    /** empty string = 全部 */
+    currentFolderId: string = ""
+    showFolderSetting: boolean = false
     private _connectTitle: string = "" // 连接标题
     private _showChannelSetting: boolean = false // 是否显示频道设置
     private _selectedConversation?: ConversationWrap // 选中的最近会话
@@ -24,6 +28,9 @@ export class ChatVM extends ProviderListener {
     private messageDeleteListener!: MessageDeleteListener
     private conversationListID = "wk-conversationlist"
     private _showGlobalSearch = false // 是否显示全局搜索
+    private _orgListener = () => {
+        this.notifyListener()
+    }
 
 
     set showAddPopover(v: boolean) {
@@ -74,6 +81,11 @@ export class ChatVM extends ProviderListener {
     didMount(): void {
         // 根据连接状态设置标题
         this.setConnectTitleWithConnectStatus(WKSDK.shared().connectManager.status)
+
+        shudoOrgManager.loadCache()
+        shudoOrgManager.addListener(this._orgListener)
+        shudoOrgManager.refreshFolders()
+        shudoOrgManager.refreshSubChannelMap()
 
         if (WKSDK.shared().connectManager.status == ConnectStatus.Connected) { // 如果已经连接则直接加载
             this.reloadRequestConversationList()
@@ -155,6 +167,32 @@ export class ChatVM extends ProviderListener {
         WKSDK.shared().conversationManager.removeConversationListener(this.conversationListener)
         WKSDK.shared().channelManager.removeListener(this.channelListener)
         WKApp.shared.removeMessageDeleteListener(this.messageDeleteListener)
+        shudoOrgManager.removeListener(this._orgListener)
+    }
+
+    selectFolder(folderId: string) {
+        this.currentFolderId = folderId
+        this.notifyListener()
+    }
+
+    /** 按当前文件夹过滤后的会话列表（空 folderId = 全部） */
+    visibleConversations(): ConversationWrap[] {
+        if (!this.currentFolderId) {
+            return this.conversations
+        }
+        const folder = shudoOrgManager.folders.find(
+            (f) => f.folder_id === this.currentFolderId
+        )
+        if (!folder) {
+            return this.conversations
+        }
+        return this.conversations.filter((c) =>
+            shudoOrgManager.folderContains(
+                folder,
+                c.channel.channelID,
+                c.channel.channelType
+            )
+        )
     }
 
     findConversation(channel: Channel) {

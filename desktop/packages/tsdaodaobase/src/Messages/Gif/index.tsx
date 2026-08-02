@@ -3,6 +3,7 @@ import React from "react"
 import WKApp from "../../App"
 import MessageBase from "../Base"
 import { MessageCell } from "../MessageCell"
+import { MessageContentTypeConst } from "../../Service/Const"
 
 
 
@@ -10,10 +11,30 @@ export class GifContent extends MessageContent {
     width!: number
     height!: number
     url!: string
+
+    constructor(url?: string, width?: number, height?: number) {
+        super()
+        if (url) this.url = url
+        if (width != null) this.width = width
+        if (height != null) this.height = height
+    }
+
     decodeJSON(content: any) {
         this.width = content["width"] || 0
         this.height = content["height"] || 0
-        this.url = content["url"] 
+        this.url = content["url"]
+    }
+
+    encodeJSON() {
+        return {
+            url: this.url || "",
+            width: this.width || 100,
+            height: this.height || 100,
+        }
+    }
+
+    get contentType() {
+        return MessageContentTypeConst.gif
     }
 
     get conversationDigest() {

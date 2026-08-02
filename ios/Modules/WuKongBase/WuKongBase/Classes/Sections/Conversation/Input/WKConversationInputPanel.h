@@ -101,6 +101,8 @@
 @property(nonatomic,strong) WKMenusBtn *menusBtn; // 菜单按钮
 @property(nonatomic,assign) BOOL showMenusBtn;
 
+@property(nonatomic,strong) UIButton *plusButton; // ➕ 更多操作按钮
+
 @property(nonatomic,strong) UIView *topView; // 输入框顶部试图
 
 -(WKConversationInputPanel*) initWithConversationContext:(id<WKConversationContext>)context;

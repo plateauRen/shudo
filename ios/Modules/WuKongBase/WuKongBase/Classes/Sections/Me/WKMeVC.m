@@ -7,6 +7,7 @@
 
 #import "WKMeVC.h"
 #import "WKMeInfoVC.h"
+#import "WKLiquidGlassHelper.h"
 @interface WKMeVC ()<WKChannelManagerDelegate>
 @property(nonatomic,strong) WKeHeader *meHeader;
 @end
@@ -105,6 +106,7 @@
 
 @property(nonatomic,strong) WKUserAvatar *avatarImgView;
 @property(nonatomic,strong) UIView *avatarBox;
+@property(nonatomic,strong,nullable) UIVisualEffectView *avatarGlassView;
 @property(nonatomic,strong) UILabel *nameLbl;
 @property(nonatomic,strong) UIImageView *bgImgView;
 @property(nonatomic,strong) UIButton *detailBtn;
@@ -183,7 +185,16 @@
         _avatarBox = [[UIView alloc] initWithFrame:CGRectMake(self.lim_width/2.0f - size/2.0f, 58.0f, size, size)];
         _avatarBox.layer.masksToBounds = YES;
         _avatarBox.layer.cornerRadius = _avatarBox.lim_width*0.4;
-        [_avatarBox setBackgroundColor:[WKApp shared].config.cellBackgroundColor];
+        if ([WKLiquidGlassHelper isLiquidGlassAvailable]) {
+            [_avatarBox setBackgroundColor:[UIColor clearColor]];
+            self.avatarGlassView = [WKLiquidGlassHelper installInView:_avatarBox
+                                                        cornerRadius:_avatarBox.lim_width*0.4
+                                                         interactive:NO
+                                                          solidColor:nil];
+            self.avatarGlassView.frame = _avatarBox.bounds;
+        } else {
+            [_avatarBox setBackgroundColor:[WKApp shared].config.cellBackgroundColor];
+        }
     }
     return _avatarBox;
 }

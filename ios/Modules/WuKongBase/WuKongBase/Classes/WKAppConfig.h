@@ -18,8 +18,13 @@ typedef enum : NSUInteger {
 } WKSystemStyle; // 系统样式
 
 typedef enum : NSUInteger {
-    WKBrandThemeOrange = 0, // 荧光橙 #FF4500 → #FF6B35
-    WKBrandThemeBlue = 1,   // 荧光蓝 #0066FF → #00C6FF
+    WKBrandThemeShiQing = 0,  // 石青（默认）#0E7490 → #38BDF8；旧存储 "orange"/0 映射至此
+    WKBrandThemeXuanQing = 1, // 玄青 #1B4D5C → #5FA8B8
+    WKBrandThemeSongYan = 2,  // 松烟 #1F7A4D → #4ADE80
+    WKBrandThemeWuLan = 3,    // 雾蓝 #3B6D9A → #7EB0D9；旧存储 "blue" 映射至此
+    // 兼容旧枚举名
+    WKBrandThemeOrange = WKBrandThemeShiQing,
+    WKBrandThemeBlue = WKBrandThemeWuLan,
 } WKBrandTheme; // 品牌主题色
 
 
@@ -48,10 +53,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// 深色模式是否跟随系统
 @property(nonatomic,assign) BOOL darkModeWithSystem;
 
-/// 品牌主题色（荧光橙 / 荧光蓝），持久化到本地
+/// 品牌主题色（石青 / 玄青 / 松烟 / 雾蓝），持久化到本地
 @property(nonatomic,assign) WKBrandTheme brandTheme;
 
-/// 当前品牌主题的展示名（如「荧光橙」）
+/// 当前品牌主题的展示名（如「石青」）
 - (NSString *)brandThemeDisplayName;
 
 /// Apply window override: Unspecified when following system, else forced light/dark.
@@ -133,7 +138,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic,strong) UIColor *backgroundColor;
 // cell的背景颜色
 @property(nonatomic,strong) UIColor *cellBackgroundColor;
-// APP主题颜色（随 brandTheme：荧光橙 / 荧光蓝）
+// APP主题颜色（随 brandTheme：石青 / 玄青 / 松烟 / 雾蓝）
 @property(nonatomic,strong) UIColor *themeColor;
 // 发送气泡底色（随 brandTheme 的柔和配套色）
 @property(nonatomic,strong) UIColor *messageSendBubbleColor;

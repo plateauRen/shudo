@@ -39,6 +39,12 @@ NS_ASSUME_NONNULL_BEGIN
                                scrollView:(UIScrollView *)scrollView
                                      edge:(UIRectEdge)edge;
 
+/// Apply inset-grouped + clear chrome suitable for Liquid Glass pages.
++ (void)applyGlassListStyleToTableView:(UITableView *)tableView;
+
+/// Translucent cell fill that sits over glass page backgrounds.
++ (void)applyGlassCellBackground:(UITableViewCell *)cell;
+
 @end
 
 NS_ASSUME_NONNULL_END

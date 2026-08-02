@@ -12,6 +12,15 @@ const addDevServerConfig = () => config => {
   };
 }
 
+/** Yarn workspaces hoist react to desktop/node_modules; CRA ModuleScopePlugin blocks that. */
+function allowWorkspaceNodeModules(config) {
+  const ModuleScopePlugin = require('react-dev-utils/ModuleScopePlugin');
+  config.resolve.plugins = (config.resolve.plugins || []).filter(
+    (p) => !(p instanceof ModuleScopePlugin)
+  );
+  return config;
+}
+
 module.exports = {
   webpack: function (config, env) {
     if (process.env.NODE_ENV === 'production') {
@@ -41,7 +50,9 @@ module.exports = {
       resolve: { fullySpecified: false },
     });
 
-    return Object.assign(
+    allowWorkspaceNodeModules(config);
+
+    const next = Object.assign(
       config,
       override(
         // 判断环境变量ANALYZER参数的值
@@ -52,7 +63,9 @@ module.exports = {
           path.resolve('../../packages'),
         ])
       )(config, env)
-    )
+    );
+    // override() may restore CRA plugins — strip ModuleScopePlugin last.
+    return allowWorkspaceNodeModules(next);
   },
   devServer: overrideDevServer(addDevServerConfig())
 }

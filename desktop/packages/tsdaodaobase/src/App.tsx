@@ -28,6 +28,21 @@ import { ConnectStatus } from "wukongimjssdk";
 import { WKBaseContext } from "./Components/WKBase";
 import StorageService from "./Service/StorageService";
 import { ProhibitwordsService } from "./Service/ProhibitwordsService";
+import {
+  isSystemAccount as isSystemAccountUID,
+  systemAccountDisplayName as systemAccountName,
+  FILE_HELPER_UID,
+  SYSTEM_NOTIFY_UID,
+} from "./Service/SystemAccount";
+import {
+  BrandThemeId,
+  BRAND_THEMES,
+  DEFAULT_BRAND_THEME,
+  normalizeBrandThemeId,
+  applyBrandThemeToDocument,
+  brandCircleAvatarDataUri,
+  brandMarkDataUri,
+} from "./Service/BrandTheme";
 
 export enum ThemeMode {
   light,
@@ -36,14 +51,59 @@ export enum ThemeMode {
 export class WKConfig {
   appName: string = "叙叨";
   appVersion: string = "0.0.0"; // app版本
-  themeColor: string = "#FF4500"; // 火焰旋风 B · 荧光橙
+  themeColor: string = BRAND_THEMES[DEFAULT_BRAND_THEME].light; // 石青
   secondColor: string = "#F5F6F7";
   pageSize: number = 15; // 数据页大小
   pageSizeOfMessage: number = 30; // 每次请求消息数量
-  fileHelperUID: string = "fileHelper"; // 文件助手UID
-  systemUID: string = "u_10000"; // 系统uid
+  fileHelperUID: string = FILE_HELPER_UID; // 文件助手UID
+  systemUID: string = SYSTEM_NOTIFY_UID; // 系统uid
+
+  isSystemAccount(uid?: string): boolean {
+    return isSystemAccountUID(uid);
+  }
+
+  /** iOS-aligned display names for built-in accounts */
+  systemAccountDisplayName(uid?: string): string | undefined {
+    return systemAccountName(uid);
+  }
 
   private _themeMode: ThemeMode = ThemeMode.light; // 主题模式
+  private _brandTheme: BrandThemeId = DEFAULT_BRAND_THEME;
+
+  applyThemeColors() {
+    const isDark = this._themeMode === ThemeMode.dark;
+    this.themeColor = applyBrandThemeToDocument(this._brandTheme, isDark);
+  }
+
+  set brandTheme(v: BrandThemeId) {
+    const id = normalizeBrandThemeId(v);
+    if (this._brandTheme === id) {
+      this.applyThemeColors();
+      return;
+    }
+    this._brandTheme = id;
+    StorageService.shared.setItem("brand-theme", id);
+    this.applyThemeColors();
+    WKApp.shared.notifyListener();
+  }
+
+  get brandTheme(): BrandThemeId {
+    return this._brandTheme;
+  }
+
+  get brandThemeDisplayName(): string {
+    return BRAND_THEMES[this._brandTheme]?.name ?? BRAND_THEMES[DEFAULT_BRAND_THEME].name;
+  }
+
+  /** Theme-tinted mark for login / branding */
+  brandMarkSrc(size = 128): string {
+    return brandMarkDataUri(this.themeColor, size);
+  }
+
+  /** System / default avatars that follow brand theme */
+  brandAvatarSrc(kind: "fileHelper" | "system" | "defaultPerson", size = 96): string {
+    return brandCircleAvatarDataUri(kind, this.themeColor, size);
+  }
 
   set themeMode(v: ThemeMode) {
     this._themeMode = v;
@@ -59,6 +119,7 @@ export class WKConfig {
       body.removeAttribute("theme-mode");
     }
     StorageService.shared.setItem("theme-mode", `${v}`);
+    this.applyThemeColors();
     WKApp.shared.notifyListener();
   }
 
@@ -276,9 +337,16 @@ export default class WKApp extends ProviderListener {
 
     console.log("设备信息--->", this.deviceId, this.deviceName, this.deviceModel);
 
+    const brandTheme = normalizeBrandThemeId(
+      StorageService.shared.getItem("brand-theme")
+    );
+    WKApp.config.brandTheme = brandTheme;
+
     const themeMode = StorageService.shared.getItem("theme-mode");
     if (themeMode === "1") {
       WKApp.config.themeMode = ThemeMode.dark;
+    } else {
+      WKApp.config.applyThemeColors();
     }
 
     WKSDK.shared().config.provider.connectAddrCallback = async (
@@ -438,6 +506,15 @@ export default class WKApp extends ProviderListener {
   avatarChannel(channel: Channel) {
     if (!channel) {
       return "";
+    }
+    // 文件传输助手 / 系统通知：统一主题色圆形图标
+    if (channel.channelType === ChannelTypePerson) {
+      if (channel.channelID === FILE_HELPER_UID) {
+        return WKApp.config.brandAvatarSrc("fileHelper");
+      }
+      if (channel.channelID === SYSTEM_NOTIFY_UID) {
+        return WKApp.config.brandAvatarSrc("system");
+      }
     }
     let avatarTag = this.getChannelAvatarTag(channel);
     const channelInfo = WKSDK.shared().channelManager.getChannelInfo(channel);

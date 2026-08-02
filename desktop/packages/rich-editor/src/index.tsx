@@ -6,6 +6,7 @@ export { RichToolbar } from "./Toolbar";
 export {
   sanitizeHtml,
   htmlToPlainText,
+  htmlToPlainTextWithTables,
   isEmptyHtml,
 } from "./sanitize";
 export { createEditorExtensions } from "./extensions";

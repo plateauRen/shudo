@@ -1,0 +1,5 @@
+var TSDD_CONFIG = {
+  APP_URL: 'http://192.168.5.249:8090/v1/'
+};
+
+window.TSDD_CONFIG = TSDD_CONFIG;

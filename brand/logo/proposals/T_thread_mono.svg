@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Shudo Logo T Mono">
+  <title>Shudo T Mono</title>
+  <rect x="96" y="128" width="220" height="64" rx="32" fill="#0E7490" opacity="0.35"/>
+  <rect x="196" y="224" width="220" height="64" rx="32" fill="#0E7490"/>
+  <rect x="96" y="320" width="280" height="64" rx="32" fill="#0E7490" opacity="0.6"/>
+</svg>

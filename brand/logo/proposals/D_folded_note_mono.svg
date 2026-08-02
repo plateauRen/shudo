@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="currentColor">
+  <title>叙叨 · D 折笺 · mono</title>
+  <path d="M138 148 H318 L374 204 V332 C374 356 354 376 330 376 H182 C158 376 138 356 138 332 Z"/>
+  <path d="M318 148 V204 H374 Z" fill="none" stroke="currentColor" stroke-width="8" opacity="0.35"/>
+  <path d="M178 230 H300 M178 270 H286 M178 310 H248" stroke="#fff" stroke-width="16" stroke-linecap="round" fill="none"/>
+  <path d="M168 376 L148 422 L208 376 Z"/>
+</svg>

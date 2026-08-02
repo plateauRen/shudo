@@ -15,15 +15,14 @@
 #import "WKAvatarUtil.h"
 #import "WKSearchbarView.h"
 #import "WKGlobalSearchResultController.h"
+#import <WuKongBase/WKLiquidGlassHelper.h>
 
 @interface WKContactsVC ()<UITableViewDataSource,UITableViewDelegate,WKContactsManagerDelegate,WKChannelManagerDelegate>
 @property(nonatomic,strong) UITableView *tableView;
 @property(nonatomic,strong) NSMutableArray *sectionTitleArr; //排序后的出现过的拼音首字母数组
 @property(nonatomic,strong) NSMutableArray<NSMutableArray*> *items;
 @property(nonatomic,strong) UILabel *titleLbl;
-@property(nonatomic,strong) WKSearchbarView *searchbarView;
-@property(nonatomic,strong) UIView *tableHeader;
-
+@property(nonatomic,strong) WKSearchbarView *navSearchBar;
 @property(nonatomic,strong) UILabel *contactsCountLbl; // 联系人数量
 
 @end
@@ -45,6 +44,8 @@
     // Do any additional setup after loading the view.
     
     self.navigationBar.title = LLang(@"联系人");
+    [self.navigationBar addSubview:self.navSearchBar];
+    [self layoutNavSearchBar];
     [self requestData];
     
     [[WKSDK shared].channelManager addDelegate:self];
@@ -57,6 +58,7 @@
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     self.navigationBar.title = LLang(@"联系人");
+    [self layoutNavSearchBar];
     // Only refresh visible offline-time labels — full reloadData on every tab switch was janky.
     for (NSIndexPath *ip in self.tableView.indexPathsForVisibleRows) {
         UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:ip];
@@ -65,6 +67,11 @@
         id model = self.items[ip.section][ip.row];
         [(WKContactsCell *)cell refresh:model];
     }
+}
+
+-(void) viewWillLayoutSubviews {
+    [super viewWillLayoutSubviews];
+    [self layoutNavSearchBar];
 }
 
 
@@ -78,21 +85,29 @@
     [[NSNotificationCenter defaultCenter] removeObserver:self name:WK_NOTIFY_CONTACTS_TAB_REDDOT_UPDATE object:nil];
 }
 
-// 开启大标题模式
+// 顶栏与会话列表一致：常规标题 + 内联搜索
 - (BOOL)largeTitle {
-    return true;
+    return false;
 }
 
-- (WKSearchbarView *)searchbarView {
-    if(!_searchbarView) {
-        _searchbarView = [[WKSearchbarView alloc] initWithFrame:CGRectMake(15.0f, 10.0f, WKScreenWidth - 30.0f, 36.0f)];
-        _searchbarView.placeholder = LLang(@"搜索");
-        _searchbarView.onClick = ^{
+- (WKSearchbarView *)navSearchBar {
+    if(!_navSearchBar) {
+        _navSearchBar = [[WKSearchbarView alloc] initWithFrame:CGRectMake(0, 0, 160, 32)];
+        _navSearchBar.placeholder = LLang(@"搜索");
+        _navSearchBar.leadingContent = YES;
+        _navSearchBar.onClick = ^{
             WKGlobalSearchResultController *vc = [WKGlobalSearchResultController new];
             [[WKNavigationManager shared] pushViewController:vc animated:NO];
         };
     }
-    return _searchbarView;
+    return _navSearchBar;
+}
+
+- (void)layoutNavSearchBar {
+    if (!self.navSearchBar.superview) {
+        return;
+    }
+    [self.navigationBar layoutLeadingTitleWithInlineSearchBar:self.navSearchBar];
 }
 
 // 联系人数据更新
@@ -114,8 +129,11 @@
 
 - (void)viewConfigChange:(WKViewConfigChangeType)type {
     [super viewConfigChange:type];
-    if(type == WKViewConfigChangeTypeLang || type == WKViewConfigChangeTypeModule) {
+    if(type == WKViewConfigChangeTypeLang || type == WKViewConfigChangeTypeModule || type == WKViewConfigChangeTypeBrandTheme) {
         [self refreshContactsHeader];
+    }
+    if (type == WKViewConfigChangeTypeBrandTheme || type == WKViewConfigChangeTypeStyle) {
+        [self.tableView reloadData];
     }
 }
 
@@ -176,22 +194,6 @@
 
 #pragma mark - table
 
--(UIView*) tableHeader {
-    if(!_tableHeader) {
-        CGFloat emptyHeight = 15.0f;
-        CGFloat emptyToSearchbarSpace = 10.0f;
-        CGFloat searchbarViewTopSpace = 10.0f;
-        _tableHeader = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, WKScreenWidth, self.searchbarView.frame.size.height+emptyHeight + emptyToSearchbarSpace + searchbarViewTopSpace)];
-        [_tableHeader addSubview:self.searchbarView];
-        
-        
-        UIView *bottomEmptyView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, self.searchbarView.lim_bottom + emptyToSearchbarSpace, WKScreenWidth, emptyHeight)];
-        [bottomEmptyView setBackgroundColor:WKApp.shared.config.cellBackgroundColor];
-        [_tableHeader addSubview:bottomEmptyView];
-    }
-    return _tableHeader;
-}
-
 -(UITableView *)tableView{
     if(!_tableView){
         _tableView = [[UITableView alloc] initWithFrame:[self visibleRect] style:UITableViewStyleGrouped];
@@ -214,9 +216,8 @@
         [_tableView registerClass:WKContactsCell.class forCellReuseIdentifier:[WKContactsCell cellId]];
         [_tableView registerClass:WKContactsHeaderItemCell.class forCellReuseIdentifier:[WKContactsHeaderItemCell cellId]];
         
-         _tableView.tableHeaderView = self.tableHeader;
-        
         _tableView.tableFooterView = [self tableFooterView];
+        [WKLiquidGlassHelper applyGlassListStyleToTableView:_tableView];
         
     }
     return _tableView;
@@ -227,11 +228,17 @@
     [self.view addSubview:self.tableView];
 }
 
+- (UIScrollView *)primaryScrollViewForLiquidGlass {
+    return self.tableView;
+}
+
 -(UIView*) tableFooterView {
     UIView *footerView = [[UIView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, self.view.lim_width, 44.0f)];
     [footerView addSubview:self.contactsCountLbl];
     self.contactsCountLbl.frame = footerView.frame;
-    footerView.backgroundColor = WKApp.shared.config.backgroundColor;
+    footerView.backgroundColor = [WKLiquidGlassHelper isLiquidGlassAvailable]
+        ? [UIColor clearColor]
+        : WKApp.shared.config.backgroundColor;
     return footerView;
 }
 
@@ -269,6 +276,13 @@
 //    lineView.lim_top = headHheght - 1;
 //    [headView addSubview:lineView];
     return headView;
+}
+
+- (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
+    if ([WKLiquidGlassHelper isLiquidGlassAvailable] &&
+        ![cell isKindOfClass:[WKContactsHeaderItemCell class]]) {
+        [WKLiquidGlassHelper applyGlassCellBackground:cell];
+    }
 }
 
 #pragma mark UITableDataSource

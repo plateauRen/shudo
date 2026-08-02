@@ -36,8 +36,10 @@
     
     if ([WKLiquidGlassHelper isLiquidGlassAvailable]) {
         self.backgroundColor = [UIColor clearColor];
+        CGFloat h = self.frame.size.height > 1.0f ? self.frame.size.height : 32.0f;
+        CGFloat radius = h * 0.5f;
         self.liquidGlassView = [WKLiquidGlassHelper installInView:self
-                                                     cornerRadius:18.0f
+                                                     cornerRadius:radius
                                                       interactive:YES
                                                        solidColor:nil];
     } else {
@@ -81,6 +83,7 @@
     if (self.liquidGlassView) {
         self.backgroundColor = [UIColor clearColor];
         self.liquidGlassView.frame = self.bounds;
+        [WKLiquidGlassHelper applyCornerRadius:self.bounds.size.height * 0.5f toEffectView:self.liquidGlassView];
         [self sendSubviewToBack:self.liquidGlassView];
     } else {
         [self setBackgroundColor:[WKApp shared].config.cellBackgroundColor];
@@ -88,7 +91,12 @@
     CGFloat searchIconRightSpace = 5.0f;
     CGFloat contentWidth = self.searchIconImgView.lim_width + self.placeholderLbl.lim_width + searchIconRightSpace;
     
-    CGFloat searchIconLeft = self.lim_width/2.0f - contentWidth/2.0f;
+    CGFloat searchIconLeft;
+    if (self.leadingContent) {
+        searchIconLeft = 10.0f;
+    } else {
+        searchIconLeft = self.lim_width/2.0f - contentWidth/2.0f;
+    }
     
     self.searchIconImgView.lim_left = searchIconLeft;
     self.searchIconImgView.lim_top = self.lim_height/2.0f - self.searchIconImgView.lim_height/2.0f;

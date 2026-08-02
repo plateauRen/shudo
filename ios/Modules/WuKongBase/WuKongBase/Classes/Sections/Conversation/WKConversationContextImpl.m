@@ -13,6 +13,8 @@
 #import "WKMessageEditView.h"
 #import "WKContextMenusVC.h"
 #import "WKRichComposerVC.h"
+#import "WKShudoOrgManager.h"
+#import "WKApp.h"
 #import <WuKongBase/WuKongBase-Swift.h>
 
 @interface WKConversationContextImpl () <WKRichComposerDelegate>
@@ -543,7 +545,50 @@
 }
 
 
+/// 话题里自动 mention + robot_id，服务端才会把群消息投递给 Hermes
+- (NSString *)resolveTopicRobotUid {
+    if (self.channel.channelType != WK_GROUP) return nil;
+    NSString *me = [WKApp shared].loginInfo.uid ?: @"";
+    NSString *(^unwrap)(NSString *) = ^NSString *(NSString *idStr) {
+        if (!idStr.length) return @"";
+        if ([idStr containsString:@"@"]) return [idStr componentsSeparatedByString:@"@"].lastObject ?: idStr;
+        return idStr;
+    };
+    NSArray<WKChannelMember *> *members = self.conversationVM.members ?: @[];
+    NSMutableArray<WKChannelMember *> *others = [NSMutableArray array];
+    NSMutableArray<WKChannelMember *> *robots = [NSMutableArray array];
+    for (WKChannelMember *m in members) {
+        if ([m.memberUid isEqualToString:me]) continue;
+        [others addObject:m];
+        if (m.robot) [robots addObject:m];
+    }
+    if (robots.count >= 1) return unwrap(robots.firstObject.memberUid);
+
+    NSDictionary *meta = [[WKShudoOrgManager shared] subChannelMeta:self.channel.channelId];
+    NSString *parent = meta[@"parent_group_no"] ?: @"";
+    if ([parent hasPrefix:@"dm:"]) {
+        NSString *peer = unwrap([parent substringFromIndex:3]);
+        if (peer.length) return peer;
+    }
+    if (others.count == 1) return unwrap(others.firstObject.memberUid);
+    return nil;
+}
+
+- (void)attachImplicitRobotMentionIfNeeded:(WKMessageContent *)content {
+    if (!content) return;
+    if (content.robotID.length) return;
+    if (self.channel.channelType != WK_GROUP) return;
+    NSString *robotUid = [self resolveTopicRobotUid];
+    if (!robotUid.length) return;
+    if (!content.mentionedInfo || content.mentionedInfo.uids.count == 0) {
+        content.mentionedInfo = [[WKMentionedInfo alloc] initWithMentionedType:WK_Mentioned_Users uids:@[robotUid]];
+    }
+    content.robotID = robotUid;
+}
+
 -(WKMessage*) sendMessage:(WKMessageContent*)content {
+    [self attachImplicitRobotMentionIfNeeded:content];
+
     WKSetting *setting = [WKSetting new];
     if(self.conversationVM.channelInfo) {
         setting.receiptEnabled = self.conversationVM.channelInfo.receipt;

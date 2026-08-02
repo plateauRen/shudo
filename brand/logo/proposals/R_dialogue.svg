@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Shudo Logo R Dialogue">
+  <title>Shudo R Dialogue</title>
+  <defs>
+    <linearGradient id="rg" x1="64" y1="448" x2="448" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0E7490"/>
+      <stop offset="100%" stop-color="#155E75"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#rg)"/>
+  <!-- left bubble (incoming) -->
+  <path fill="#ffffff" d="M96 148h196c28 0 52 24 52 52v88c0 28-24 52-52 52H168l-40 40c-8 8-22 2-22-10v-30H96c-28 0-52-24-52-52v-88c0-28 24-52 52-52z"/>
+  <!-- right bubble (outgoing) -->
+  <path fill="#A5F3FC" d="M220 248h196c28 0 52 24 52 52v88c0 28-24 52-52 52h-56v30c0 12-14 18-22 10l-40-40H220c-28 0-52-24-52-52v-88c0-28 24-52 52-52z"/>
+</svg>

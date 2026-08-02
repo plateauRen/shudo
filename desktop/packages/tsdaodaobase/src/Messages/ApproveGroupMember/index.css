@@ -11,7 +11,7 @@
 }
 .wk-message-approve {
     margin-left: 10px;
-    color: var(--wk-color-theme, #FF4500);
+    color: var(--wk-color-theme, #0E7490);
 }
 body[theme-mode=dark] .wk-message-system  {
     color: #999;

@@ -24,6 +24,12 @@
 #import "WKConversationListHeaderView.h"
 #import "WKOnlineStatusManager.h"
 #import "WKMD5Util.h"
+#import "WKLiquidGlassHelper.h"
+#import "WKFolderTabsView.h"
+#import "WKFolderSettingVC.h"
+#import "WKNavigationManager.h"
+#import "UIView+WKCommon.h"
+#import "WKPCOnlineVC.h"
 @interface WKConversationListVC ()<UITableViewDelegate,UITableViewDataSource,UISearchControllerDelegate,WKConnectionManagerDelegate,WKChannelManagerDelegate,WKConversationManagerDelegate,WKNetworkListenerDelegate,WKChatManagerDelegate,WKTypingManagerDelegate,SwipeTableViewCellDelegate,WKOnlineStatusManagerDelegate>
 @property(nonatomic,copy) NSString *_title;
 @property(nonatomic,strong)  WKConversationListTableView *tableView;
@@ -43,6 +49,15 @@
 //@property(nonatomic,strong) WKSearchbarView *searchbarView;
 
 @property(nonatomic,strong) WKConversationListHeaderView *tableHeader;
+@property(nonatomic,strong) WKSearchbarView *navSearchBar;
+@property(nonatomic,strong) WKFolderTabsView *folderTabs;
+@property(nonatomic,copy) NSString *currentFolderId;
+@property(nonatomic,copy) NSArray<WKConversationWrapModel *> *visibleConversations;
+@property(nonatomic,copy) void (^foldersListener)(void);
+/// 网页/电脑已登录时替换左上角「叙叨」标题
+@property(nonatomic,strong) UIControl *navDeviceOnlineView;
+@property(nonatomic,strong) UIImageView *navDeviceOnlineIcon;
+@property(nonatomic,strong) UILabel *navDeviceOnlineLabel;
 
 //@property(nonatomic,strong) UIView *tableHeaderBottomEmptyView;
 
@@ -69,48 +84,321 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    self.currentFolderId = @"";
+    self.visibleConversations = @[];
+    [self.view addSubview:self.folderTabs];
     [self.view addSubview:self.tableView];
     self.connectLock = [[NSLock alloc] init];
     self.conversationLock = [[NSRecursiveLock alloc] init];
     [self addDelegates];
+    [self.navigationBar addSubview:self.navSearchBar];
+    [self.navigationBar addSubview:self.navDeviceOnlineView];
     
     // 加载最近会话列表数据
     __weak __typeof(self) weakSelf  = self;
+    self.foldersListener = ^{
+        [weakSelf.folderTabs reloadFolders];
+        [weakSelf rebuildVisibleConversationsAndReload];
+    };
+    [[WKShudoOrgManager shared] addFoldersListener:self.foldersListener];
+    [[WKShudoOrgManager shared] refreshFolders:^(NSError *error) {
+        [weakSelf.folderTabs reloadFolders];
+        [weakSelf rebuildVisibleConversationsAndReload];
+    }];
+    [[WKShudoOrgManager shared] refreshSubChannelMap:^(NSError *error) {
+        [weakSelf rebuildVisibleConversationsAndReload];
+    }];
     [_conversationListVM loadConversationList:^{
-        if([weakSelf.conversationListVM hasConversationTop]) {
+        if ([WKLiquidGlassHelper isLiquidGlassAvailable]) {
+            [weakSelf.tableHeader.tableHeaderBottomEmptyView setBackgroundColor:[UIColor clearColor]];
+        } else if([weakSelf.conversationListVM hasConversationTop]) {
             [weakSelf.tableHeader.tableHeaderBottomEmptyView setBackgroundColor:[WKApp shared].config.backgroundColor];
         }else {
             [weakSelf.tableHeader.tableHeaderBottomEmptyView setBackgroundColor:[WKApp shared].config.cellBackgroundColor];
         }
-        [weakSelf.tableView reloadData];
+        [weakSelf rebuildVisibleConversationsAndReload];
         [weakSelf refreshBadge];
 
     }];
     
 //    self.refreshTimer = [NSTimer scheduledTimerWithTimeInterval:30 target:self selector:@selector(timerRefreshTable) userInfo:nil repeats:YES];
 //
-    self.tableHeader.pcDeviceFlag = [WKOnlineStatusManager shared].pcDeviceFlag;
-    self.tableHeader.showPCOnline = [WKOnlineStatusManager shared].pcOnline;
+    [self refreshNavBrandForDeviceOnline];
+    [self layoutNavSearchBar];
+    [self layoutFolderTabsAndTable];
     
+}
+
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    [self layoutFolderTabsAndTable];
+}
+
+- (void)layoutFolderTabsAndTable {
+    CGRect vis = [self visibleRect];
+    CGFloat tabsH = 44.0f;
+    self.folderTabs.frame = CGRectMake(vis.origin.x, vis.origin.y, vis.size.width, tabsH);
+    self.tableView.frame = CGRectMake(vis.origin.x, vis.origin.y + tabsH, vis.size.width, MAX(0, vis.size.height - tabsH));
+}
+
+- (WKFolderTabsView *)folderTabs {
+    if (!_folderTabs) {
+        _folderTabs = [[WKFolderTabsView alloc] initWithFrame:CGRectMake(0, 0, WKScreenWidth, 44)];
+        __weak typeof(self) weakSelf = self;
+        _folderTabs.onSelectFolder = ^(NSString *folderId) {
+            weakSelf.currentFolderId = folderId ?: @"";
+            [weakSelf rebuildVisibleConversationsAndReload];
+        };
+        _folderTabs.onMore = ^{
+            [weakSelf showFolderMoreMenu];
+        };
+    }
+    return _folderTabs;
+}
+
+- (void)rebuildVisibleConversationsAndReload {
+    NSArray<WKConversationWrapModel *> *all = [self.conversationListVM conversationList] ?: @[];
+    if (!self.currentFolderId.length) {
+        self.visibleConversations = all;
+    } else {
+        NSDictionary *folder = nil;
+        for (NSDictionary *f in [WKShudoOrgManager shared].folders) {
+            if ([f[@"folder_id"] isEqualToString:self.currentFolderId]) {
+                folder = f;
+                break;
+            }
+        }
+        if (!folder) {
+            self.visibleConversations = all;
+        } else {
+            NSMutableArray *filtered = [NSMutableArray array];
+            for (WKConversationWrapModel *m in all) {
+                if ([[WKShudoOrgManager shared] folder:folder containsChannel:m.channel.channelId type:m.channel.channelType]) {
+                    [filtered addObject:m];
+                }
+            }
+            self.visibleConversations = filtered;
+        }
+    }
+    [self.tableView reloadData];
+}
+
+- (WKConversationWrapModel *)visibleConversationAtIndex:(NSInteger)index {
+    if (index < 0 || index >= (NSInteger)self.visibleConversations.count) return nil;
+    return self.visibleConversations[index];
+}
+
+- (BOOL)isFolderFilterActive {
+    return self.currentFolderId.length > 0;
+}
+
+- (NSInteger)visibleIndexForChannel:(WKChannel *)channel {
+    if (!channel) return -1;
+    NSArray<WKConversationWrapModel *> *list = self.visibleConversations;
+    for (NSInteger i = 0; i < (NSInteger)list.count; i++) {
+        if ([list[i].channel isEqual:channel]) return i;
+    }
+    return -1;
+}
+
+- (void)showFolderMoreMenu {
+    UIAlertController *sheet = [UIAlertController alertControllerWithTitle:@"分组" message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    __weak typeof(self) weakSelf = self;
+    [sheet addAction:[UIAlertAction actionWithTitle:@"新建分组" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [weakSelf promptCreateFolder];
+    }]];
+    [sheet addAction:[UIAlertAction actionWithTitle:@"管理分组" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        WKFolderSettingVC *vc = [WKFolderSettingVC new];
+        [[WKNavigationManager shared] pushViewController:vc animated:YES];
+    }]];
+    [sheet addAction:[UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil]];
+    [self presentViewController:sheet animated:YES completion:nil];
+}
+
+- (void)promptCreateFolder {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"新建分组" message:nil preferredStyle:UIAlertControllerStyleAlert];
+    [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+        textField.placeholder = @"分组名称";
+    }];
+    __weak typeof(self) weakSelf = self;
+    [alert addAction:[UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil]];
+    [alert addAction:[UIAlertAction actionWithTitle:@"创建" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        NSString *name = [alert.textFields.firstObject.text stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+        if (!name.length) return;
+        [[WKShudoOrgManager shared] createFolder:name complete:^(NSDictionary *folder, NSError *error) {
+            if (error) {
+                [weakSelf.view showHUDWithHide:error.localizedDescription ?: @"创建失败"];
+                return;
+            }
+            NSString *fid = folder[@"folder_id"] ?: @"";
+            if (fid.length) {
+                weakSelf.currentFolderId = fid;
+                weakSelf.folderTabs.selectedFolderId = fid;
+            }
+            [weakSelf.folderTabs reloadFolders];
+            [weakSelf rebuildVisibleConversationsAndReload];
+            [weakSelf.view showHUDWithHide:@"已创建分组"];
+        }];
+    }]];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
+- (void)showMoveToFolderForChannel:(WKChannel *)channel {
+    if (!channel) return;
+    UIAlertController *sheet = [UIAlertController alertControllerWithTitle:@"移到分组" message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    __weak typeof(self) weakSelf = self;
+    NSArray *containing = [[WKShudoOrgManager shared] foldersContainingChannel:channel.channelId type:channel.channelType];
+    for (NSDictionary *f in [WKShudoOrgManager shared].folders) {
+        NSString *fid = f[@"folder_id"] ?: @"";
+        NSString *name = f[@"name"] ?: @"";
+        BOOL already = [[WKShudoOrgManager shared] folder:f containsChannel:channel.channelId type:channel.channelType];
+        if (already) continue;
+        [sheet addAction:[UIAlertAction actionWithTitle:[NSString stringWithFormat:@"移到分组：%@", name] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [[WKShudoOrgManager shared] addChannel:channel.channelId type:channel.channelType toFolder:fid complete:^(NSError *error) {
+                if (error) {
+                    [weakSelf.view showHUDWithHide:error.localizedDescription ?: @"操作失败"];
+                } else {
+                    [weakSelf.view showHUDWithHide:[NSString stringWithFormat:@"已加入「%@」", name]];
+                    [weakSelf rebuildVisibleConversationsAndReload];
+                }
+            }];
+        }]];
+    }
+    for (NSDictionary *f in containing) {
+        NSString *fid = f[@"folder_id"] ?: @"";
+        NSString *name = f[@"name"] ?: @"";
+        [sheet addAction:[UIAlertAction actionWithTitle:[NSString stringWithFormat:@"从「%@」移除", name] style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+            [[WKShudoOrgManager shared] removeChannel:channel.channelId type:channel.channelType fromFolder:fid complete:^(NSError *error) {
+                if (error) {
+                    [weakSelf.view showHUDWithHide:error.localizedDescription ?: @"操作失败"];
+                } else {
+                    [weakSelf rebuildVisibleConversationsAndReload];
+                }
+            }];
+        }]];
+    }
+    if (sheet.actions.count == 0) {
+        [sheet addAction:[UIAlertAction actionWithTitle:@"暂无可用分组，请先新建" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [weakSelf promptCreateFolder];
+        }]];
+    }
+    [sheet addAction:[UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil]];
+    [self presentViewController:sheet animated:YES completion:nil];
 }
 
 -(void) timerRefreshTable {
     [self refreshTableNoSort];
 }
 
-// 开启大标题模式
+// 顶栏用常规标题字号，搜索框与标题同一行
 - (BOOL)largeTitle {
-    return true;
+    return false;
 }
 
 -(void) viewWillLayoutSubviews {
     [super viewWillLayoutSubviews];
+    [self layoutNavSearchBar];
 }
 
+- (WKSearchbarView *)navSearchBar {
+    if (!_navSearchBar) {
+        _navSearchBar = [[WKSearchbarView alloc] initWithFrame:CGRectMake(0, 0, 160, 32)];
+        _navSearchBar.placeholder = LLang(@"搜索");
+        _navSearchBar.leadingContent = YES;
+        __weak typeof(self) weakSelf = self;
+        _navSearchBar.onClick = ^{
+            (void)weakSelf;
+            WKGlobalSearchResultController *vc = [WKGlobalSearchResultController new];
+            [[WKNavigationManager shared] pushViewController:vc animated:NO];
+        };
+    }
+    return _navSearchBar;
+}
+
+- (UIControl *)navDeviceOnlineView {
+    if (!_navDeviceOnlineView) {
+        _navDeviceOnlineView = [[UIControl alloc] initWithFrame:CGRectMake(0, 0, 120, 32)];
+        _navDeviceOnlineView.hidden = YES;
+        [_navDeviceOnlineView addTarget:self action:@selector(onNavDeviceOnlineTap) forControlEvents:UIControlEventTouchUpInside];
+        _navDeviceOnlineIcon = [[UIImageView alloc] initWithFrame:CGRectMake(0, 7, 18, 18)];
+        _navDeviceOnlineIcon.image = [self imageName:@"ConversationList/Index/PCOnline"];
+        _navDeviceOnlineIcon.contentMode = UIViewContentModeScaleAspectFit;
+        [_navDeviceOnlineView addSubview:_navDeviceOnlineIcon];
+        _navDeviceOnlineLabel = [[UILabel alloc] init];
+        _navDeviceOnlineLabel.font = [[WKApp shared].config appFontOfSizeMedium:17.0f];
+        _navDeviceOnlineLabel.textColor = [WKApp shared].config.navBarTitleColor;
+        _navDeviceOnlineLabel.lineBreakMode = NSLineBreakByClipping;
+        [_navDeviceOnlineView addSubview:_navDeviceOnlineLabel];
+    }
+    return _navDeviceOnlineView;
+}
+
+- (BOOL)shouldShowNavDeviceOnline {
+    if (![WKOnlineStatusManager shared].pcOnline) return NO;
+    return [WKSDK shared].connectionManager.connectStatus == WKConnected;
+}
+
+- (void)refreshNavBrandForDeviceOnline {
+    BOOL show = [self shouldShowNavDeviceOnline];
+    self.navDeviceOnlineView.hidden = !show;
+    self.navigationBar.titleLabel.hidden = show;
+    if (!show) return;
+    // 仅保留设备图标 +「叙叨」，不占多余文案
+    self.navDeviceOnlineLabel.text = [WKApp shared].config.appName ?: @"叙叨";
+    [self.navDeviceOnlineLabel sizeToFit];
+    CGFloat iconW = 18.0f;
+    CGFloat gap = 4.0f;
+    CGFloat labelW = MIN(48.0f, self.navDeviceOnlineLabel.lim_width);
+    self.navDeviceOnlineLabel.frame = CGRectMake(iconW + gap, 0, labelW, 32.0f);
+    self.navDeviceOnlineIcon.frame = CGRectMake(0, 7, iconW, 18);
+    self.navDeviceOnlineView.lim_size = CGSizeMake(iconW + gap + labelW, 32.0f);
+}
+
+- (void)onNavDeviceOnlineTap {
+    WKPCOnlineVC *vc = [WKPCOnlineVC new];
+    vc.mute = WKOnlineStatusManager.shared.muteOfApp;
+    [[WKNavigationManager shared] pushViewController:vc animated:YES];
+}
+
+- (void)layoutNavSearchBar {
+    if (!self.navSearchBar.superview) {
+        return;
+    }
+    [self refreshNavBrandForDeviceOnline];
+    if ([self shouldShowNavDeviceOnline]) {
+        CGFloat statusHeight = [UIApplication sharedApplication].statusBarFrame.size.height;
+        CGFloat contentH = MAX(0.0f, self.navigationBar.lim_height - statusHeight);
+        self.navDeviceOnlineView.lim_left = 16.0f;
+        self.navDeviceOnlineView.lim_top = statusHeight + (contentH - self.navDeviceOnlineView.lim_height) / 2.0f;
+        [self.navigationBar bringSubviewToFront:self.navDeviceOnlineView];
+
+        UIView *right = self.navigationBar.rightView;
+        BOOL hasRight = right && right.superview && right.lim_width > 1.0f;
+        if (hasRight) {
+            right.lim_left = self.navigationBar.lim_width - right.lim_width - 12.0f;
+            right.lim_top = statusHeight + (contentH - right.lim_height) / 2.0f;
+        }
+        CGFloat rightEdge = hasRight ? right.lim_left : (self.navigationBar.lim_width - 16.0f);
+        CGFloat searchH = 32.0f;
+        CGFloat searchLeft = self.navDeviceOnlineView.lim_right + 10.0f;
+        CGFloat searchW = MAX(96.0f, rightEdge - 10.0f - searchLeft);
+        self.navSearchBar.frame = CGRectMake(searchLeft,
+                                            statusHeight + (contentH - searchH) / 2.0f,
+                                            searchW,
+                                            searchH);
+        [self.navigationBar bringSubviewToFront:self.navSearchBar];
+        if (hasRight) {
+            [self.navigationBar bringSubviewToFront:right];
+        }
+    } else {
+        [self.navigationBar layoutLeadingTitleWithInlineSearchBar:self.navSearchBar];
+    }
+}
 
 // 设置自定义标题
 -(void) setCustomTitle:(NSString*)title {
     self.navigationBar.title = title;
+    [self layoutNavSearchBar];
 }
 
 -(void) viewWillAppear:(BOOL)animated {
@@ -173,6 +461,10 @@
     [[WKTypingManager shared] removeDelegate:self];
     // 在线状态
     [[WKOnlineStatusManager shared] removeDelegate:self];
+    if (self.foldersListener) {
+        [[WKShudoOrgManager shared] removeFoldersListener:self.foldersListener];
+        self.foldersListener = nil;
+    }
 }
 
 -(UIView*) rightAddItem {
@@ -198,6 +490,7 @@
         rightItem = self.rightAddItem;
     }
     self.rightView = rightItem;
+    [self layoutNavSearchBar];
 }
 
 -(void) rightAddPressed {
@@ -269,12 +562,33 @@
         _tableView.estimatedSectionFooterHeight = 0;
         _tableView.sectionHeaderHeight = 0.0f;
         _tableView.sectionFooterHeight = 0.0f;
+        if (@available(iOS 15.0, *)) {
+            _tableView.sectionHeaderTopPadding = 0;
+        }
         
-        _tableView.tableHeaderView = self.tableHeader;
+        [self applyTableHeaderView];
         
         [_tableView registerClass:[WKConversationListCell class] forCellReuseIdentifier:@"WKConversationListCell"];
     }
     return _tableView;
+}
+
+/// 重新挂载 tableHeaderView，高度为 0 时真正收起，避免 Grouped 列表顶空隙
+- (void)applyTableHeaderView {
+    [self.tableHeader layoutIfNeeded];
+    UIView *header = self.tableHeader;
+    CGFloat h = header.bounds.size.height;
+    if (h < 0.5f) {
+        // 无横幅：不挂 header，会话紧贴分组 Tab
+        self.tableView.tableHeaderView = nil;
+        return;
+    }
+    header.frame = CGRectMake(0, 0, WKScreenWidth, h);
+    self.tableView.tableHeaderView = header;
+}
+
+- (UIScrollView *)primaryScrollViewForLiquidGlass {
+    return self.tableView;
 }
 
 
@@ -282,7 +596,6 @@
 -(WKConversationListHeaderView*) tableHeader {
     if(!_tableHeader) {
         _tableHeader = [[WKConversationListHeaderView alloc] init];
-        _tableHeader.showPCOnline = [WKOnlineStatusManager shared].pcOnline;
         _tableHeader.backgroundColor = [UIColor clearColor];
 //        _tableHeader.showEmpty = true;
 //        [_tableHeader addSubview:self.searchbarView];
@@ -298,8 +611,8 @@
 
 -(void) showNetworkError:(BOOL) show {
     self.tableHeader.showNetworkError = show;
-    [self.tableView reloadData];
-     
+    [self applyTableHeaderView];
+    [self rebuildVisibleConversationsAndReload];
 }
 
 - (void)viewConfigChange:(WKViewConfigChangeType)type {
@@ -335,14 +648,12 @@
 
 #pragma mark -- WKOnlineStatusManagerDelegate
 
-// 我的pc状态改变
+// 我的pc/网页状态改变 —— 提示放在左上角标题位，不占列表行
 - (void)onlineStatusManagerMyPCOnlineChange:(WKOnlineStatusManager *)manager status:(WKPCOnlineResp *)status {
-    
-    self.tableHeader.pcDeviceFlag = status.deviceFlag;
-    self.tableHeader.showPCOnline = status.online;
-    
-    [self.tableView reloadData];
-    
+    (void)manager;
+    (void)status;
+    [self refreshTitle];
+    [self layoutNavSearchBar];
 }
 
 #pragma mark - WKTypingManagerDelegate
@@ -359,7 +670,10 @@
             WKTypingContent *content = (WKTypingContent*)message.content;
             model.typing = YES;
             model.typer = content.typingName;
-            [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:index inSection:0]] withRowAnimation:UITableViewRowAnimationNone];
+            NSInteger vis = [self visibleIndexForChannel:channel];
+            if(vis != -1) {
+                [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:vis inSection:0]] withRowAnimation:UITableViewRowAnimationNone];
+            }
         }
     }
     
@@ -374,9 +688,10 @@
     if(index!=-1) {
         WKConversationWrapModel *model = [self.conversationListVM modelAtIndex:index];
         model.typing = NO;
-        [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:index inSection:0]] withRowAnimation:UITableViewRowAnimationNone];
-        
-//        [self refreshTable];
+        NSInteger vis = [self visibleIndexForChannel:channel];
+        if(vis != -1) {
+            [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:vis inSection:0]] withRowAnimation:UITableViewRowAnimationNone];
+        }
     }
 }
 
@@ -395,9 +710,11 @@
         if([conversation.lastClientMsgNo isEqualToString:message.clientMsgNo]) {
             [conversation setLastMessage:message];
         }
-//
-        WKConversationListCell *cell =  [self.tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:index inSection:0]];
-        [cell refreshWithModel:conversation];
+        NSInteger vis = [self visibleIndexForChannel:message.channel];
+        if(vis != -1) {
+            WKConversationListCell *cell =  [self.tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:vis inSection:0]];
+            [cell refreshWithModel:conversation];
+        }
     }
     
     if(left == 0 ) {
@@ -445,6 +762,18 @@
 -(void) uiAddOrUpdateConversationForOne:(WKConversation*)conversation {
     WKConversationWrapModel *newModel = [self.conversationListVM getRealShowConversationWrap:[[WKConversationWrapModel alloc] initWithConversation:conversation]];
     
+    // 分组过滤时行索引与 VM 不一致，整表重建可见列表
+    if ([self isFolderFilterActive]) {
+        NSInteger oldIndex =[self.conversationListVM indexAtChannel:newModel.channel];
+        if(oldIndex!=-1) {
+            [self.conversationListVM removeAtIndex:oldIndex];
+        }
+        NSInteger insertPlace = [self.conversationListVM findInsertPlace:newModel];
+        [self.conversationListVM insert:newModel atIndex:insertPlace];
+        [self rebuildVisibleConversationsAndReload];
+        return;
+    }
+    
     NSInteger oldIndex =[self.conversationListVM indexAtChannel:newModel.channel];
     if(oldIndex!=-1) {
         
@@ -455,6 +784,8 @@
             if(cell) {
                 [cell refreshWithModel:newModel];
             }
+            // 保持 visible 与 VM 同步（全部 Tab）
+            self.visibleConversations = [self.conversationListVM conversationList] ?: @[];
             return;
         }
         
@@ -464,13 +795,14 @@
        
         [self.conversationListVM removeAtIndex:oldIndex];
         [self.conversationListVM insert:newModel atIndex:insertPlace];
+        self.visibleConversations = [self.conversationListVM conversationList] ?: @[];
         @try {
             [self.tableView beginUpdates];
             [self.tableView moveRowAtIndexPath:[NSIndexPath indexPathForRow:oldIndex inSection:0] toIndexPath:[NSIndexPath indexPathForRow:insertPlace inSection:0]];
             [self.tableView endUpdates];
         } @catch (NSException *exception) { // moveRowAtIndexPath 有时会引起异常。原因还没找到
             WKLogError(@"moveRowAtIndexPath is error -> %@",exception);
-            [self.tableView reloadData];
+            [self rebuildVisibleConversationsAndReload];
         }
        
         WKConversationListCell *cell = [self.tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:insertPlace inSection:0]];
@@ -488,6 +820,11 @@
 -(void) uiAddConversation:(WKConversation*)conversation {
     WKConversationWrapModel *model = [[WKConversationWrapModel alloc] initWithConversation:conversation];
     NSInteger insertPlace = [self.conversationListVM insert:model];
+    if ([self isFolderFilterActive]) {
+        [self rebuildVisibleConversationsAndReload];
+        return;
+    }
+    self.visibleConversations = [self.conversationListVM conversationList] ?: @[];
     [self.tableView insertRowsAtIndexPaths:@[ [NSIndexPath indexPathForRow:insertPlace inSection:0] ] withRowAnimation:UITableViewRowAnimationFade];
 }
 // 删除最近会话
@@ -510,15 +847,17 @@
     
     NSInteger index = [self.conversationListVM indexAtChannel:channel];
     if(index!=-1) {
-        WKConversationListCell *cell = [self.tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:index inSection:0]];
-        if(cell) {
-           WKConversationWrapModel *model = [self.conversationListVM modelAtIndex:index];
-            model.unreadCount = unreadCount;
-            [cell refreshWithModel:model];
-            [cell layoutSubviews];
-            [self refreshBadge];
+        WKConversationWrapModel *model = [self.conversationListVM modelAtIndex:index];
+        model.unreadCount = unreadCount;
+        NSInteger vis = [self visibleIndexForChannel:channel];
+        if(vis != -1) {
+            WKConversationListCell *cell = [self.tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:vis inSection:0]];
+            if(cell) {
+                [cell refreshWithModel:model];
+                [cell layoutSubviews];
+            }
         }
-       
+        [self refreshBadge];
     }
 }
 // 删除所有最近会话
@@ -558,13 +897,10 @@
         if([self hasChange:channelInfo oldChannelInfo:oldChannelInfo]) {
             [self uiAddOrUpdateConversationForOne:conversation];
         }else{
-            [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:index inSection:0]] withRowAnimation:UITableViewRowAnimationNone];
-            
-//            WKConversationListCell *cell = [self.tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:index inSection:0]];
-//            if(cell) {
-//                WKConversationWrapModel *model = [self.conversationListVM modelAtIndex:index];
-//                [cell refreshWithModel:model];
-//            }
+            NSInteger vis = [self visibleIndexForChannel:channelInfo.channel];
+            if(vis != -1) {
+                [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:vis inSection:0]] withRowAnimation:UITableViewRowAnimationNone];
+            }
         }
         [self resetHeaderBottomEmptyBackgroundColor];
     }
@@ -592,9 +928,25 @@
 
     return 88.0f;
 }
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+    return CGFLOAT_MIN;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section {
+    return CGFLOAT_MIN;
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
+    return nil;
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section {
+    return nil;
+}
+
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-    
-    return [_conversationListVM conversationCount];
+    return (NSInteger)self.visibleConversations.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -608,14 +960,14 @@
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
     WKConversationListCell *conversationListCell = (WKConversationListCell*)cell;
-    WKConversationWrapModel *conversationModel = [_conversationListVM conversationAtIndex:indexPath.row];
+    WKConversationWrapModel *conversationModel = [self visibleConversationAtIndex:indexPath.row];
     if(conversationModel) {
         [conversationListCell refreshWithModel:conversationModel];
     }
 }
 
 - (void)tableView:(UITableView *)tableView didEndDisplayingCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
-    WKConversationWrapModel *conversationModel = [_conversationListVM conversationAtIndex:indexPath.row];
+    WKConversationWrapModel *conversationModel = [self visibleConversationAtIndex:indexPath.row];
     if(conversationModel) {
         [conversationModel cancelChannelRequest];
     }
@@ -623,7 +975,7 @@
 
 -(void) tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
-     WKConversationWrapModel *conversationModel = [_conversationListVM conversationAtIndex:indexPath.row];
+     WKConversationWrapModel *conversationModel = [self visibleConversationAtIndex:indexPath.row];
     // 防止重复点击
     WKChannel *channel = conversationModel.channel;
     static bool canSelect = true;
@@ -692,7 +1044,8 @@
  */
 - (NSArray<SwipeButton *> *)tableView:(UITableView *)tableView rightSwipeButtonsAtIndexPath:(NSIndexPath *)indexPath {
 
-    WKConversationWrapModel *conversationModel = [self.conversationListVM conversationAtIndex:indexPath.row];
+    WKConversationWrapModel *conversationModel = [self visibleConversationAtIndex:indexPath.row];
+    if (!conversationModel) return @[];
     
     // ---------- 免打扰 ----------
     NSString *muteTitle;
@@ -732,26 +1085,45 @@
     // ---------- 删除 ----------
     
     __weak typeof(self) weakSelf =  self;
+    WKChannel *delChannel = conversationModel.channel;
     SwipeButton *deleteBtn = [self swipeButton:LLang(@"删除") backgroundColor:[UIColor redColor] animationNamed:@"Other/list_icon_delete" touchBlock:^{
         WKActionSheetView2 *sheet = [WKActionSheetView2 initWithTip:nil];
         [sheet addItem:[WKActionSheetButtonItem2 initWithTitle:LLang(@"清空聊天记录") onClick:^{
-            WKConversationWrapModel *conversationModel = [weakSelf.conversationListVM conversationAtIndex:indexPath.row];
-            [[WKMessageManager shared] clearMessages:conversationModel.channel];
+            [[WKMessageManager shared] clearMessages:delChannel];
         }]];
         [sheet addItem:[WKActionSheetButtonItem2 initWithTitle:LLang(@"确认删除") onClick:^{
-            WKConversationWrapModel *conversationModel = [weakSelf.conversationListVM conversationAtIndex:indexPath.row];
-            [weakSelf.conversationListVM removeConversationAtIndex:indexPath.row];
-            [weakSelf.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
-            if(conversationModel) {
-                [[WKSDK shared].conversationManager deleteConversation:conversationModel.channel];
+            NSInteger realIdx = [weakSelf.conversationListVM indexAtChannel:delChannel];
+            if (realIdx >= 0) {
+                [weakSelf.conversationListVM removeConversationAtIndex:realIdx];
             }
+            [[WKSDK shared].conversationManager deleteConversation:delChannel];
+            [weakSelf rebuildVisibleConversationsAndReload];
         }]];
         [sheet show];
     }];
+
+    // ---------- 分组 ----------
+    SwipeButton *folderBtn = [self swipeButton:@"分组" backgroundColor:[UIColor colorWithRed:90.0f/255.0f green:120.0f/255.0f blue:220.0f/255.0f alpha:1.0f] animationNamed:stickAnimationNamed touchBlock:^{
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [weakSelf showMoveToFolderForChannel:delChannel];
+        });
+    }];
     
-    
-    
-    return @[deleteBtn,stickBtn,muteBtn];
+    // ---------- 话题（父频道：创建/管理；话题内：所属群） ----------
+    NSMutableArray *btns = [NSMutableArray arrayWithObjects:deleteBtn, stickBtn, muteBtn, folderBtn, nil];
+    WKChannel *channel = conversationModel.channel;
+    BOOL canHost = [[WKShudoOrgManager shared] canHostTopicsInChannel:channel];
+    BOOL isTopic = channel.channelType == WK_GROUP &&
+        [[WKShudoOrgManager shared] subChannelMeta:channel.channelId] != nil;
+    if (canHost || isTopic) {
+        SwipeButton *topicBtn = [self swipeButton:LLang(@"话题") backgroundColor:[WKApp shared].config.themeColor animationNamed:stickAnimationNamed touchBlock:^{
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [[WKShudoOrgManager shared] presentTopicActionsForChannel:channel];
+            });
+        }];
+        [btns insertObject:topicBtn atIndex:0];
+    }
+    return btns;
 }
 
 - (NSArray<SwipeButton *> *)tableView:(UITableView *)tableView leftSwipeButtonsAtIndexPath:(NSIndexPath *)indexPath {
@@ -831,24 +1203,24 @@
 
 -(void) refreshTableNoSort {
     [self refreshHeader];
-    [self.tableView reloadData];
+    [self rebuildVisibleConversationsAndReload];
 }
 
 -(void) refreshTable {
     [self.conversationListVM sortConversationList];
     [self refreshHeader];
-    [self.tableView reloadData];
+    [self rebuildVisibleConversationsAndReload];
 }
 
 - (void)refreshVisibleConversationCells {
     NSArray<NSIndexPath *> *paths = self.tableView.indexPathsForVisibleRows;
     if (paths.count == 0) return;
-    NSInteger count = [self.conversationListVM conversationCount];
+    NSInteger count = (NSInteger)self.visibleConversations.count;
     for (NSIndexPath *ip in paths) {
         UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:ip];
         if (![cell isKindOfClass:[WKConversationListCell class]]) continue;
         if (ip.row >= count) continue;
-        WKConversationWrapModel *model = [self.conversationListVM conversationAtIndex:ip.row];
+        WKConversationWrapModel *model = [self visibleConversationAtIndex:ip.row];
         if (!model) continue;
         [(WKConversationListCell *)cell refreshWithModel:model];
     }
@@ -861,10 +1233,14 @@
 
 -(void) refreshHeader {
     [self resetHeaderBottomEmptyBackgroundColor];
-    [self.tableHeader layoutSubviews];
+    [self applyTableHeaderView];
 }
 
 -(void) resetHeaderBottomEmptyBackgroundColor {
+    if ([WKLiquidGlassHelper isLiquidGlassAvailable]) {
+        [self.tableHeader.tableHeaderBottomEmptyView setBackgroundColor:[UIColor clearColor]];
+        return;
+    }
     if([self.conversationListVM hasConversationTop]) {
         [self.tableHeader.tableHeaderBottomEmptyView setBackgroundColor:[WKApp shared].config.backgroundColor];
     }else{

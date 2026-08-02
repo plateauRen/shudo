@@ -1,6 +1,8 @@
 .wk-friendadd .wk-search-box {
-  border-radius: 0px;
-  background-color: white;
+  border-radius: var(--wk-radius-md);
+  background-color: var(--wk-surface-sunken);
+  margin: var(--wk-space-3);
+  width: calc(100% - 24px);
 }
 
 .wk-friendadd .wk-search-input {
@@ -8,7 +10,7 @@
 }
 
 .wk-friendadd .wk-search-input input {
-  width: 250px;
+  width: 100%;
 }
 
 .wk-friendadd-content-qrcode {
@@ -17,10 +19,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--wk-text-secondary);
 }
 
 body[theme-mode="dark"] .wk-friendadd-content-qrcode {
-  color: white;
+  color: var(--wk-text-secondary);
 }
 
 .wk-friendadd-content-qrcode img {

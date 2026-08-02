@@ -73,7 +73,11 @@ export class MainPage extends Component {
                     context.popToRoot()
                 }
             }} contentRight={<div className="wk-chat-empty">
-                <img src={require("./assets/start_chat.svg").default} alt=""></img>
+                <div className="wk-chat-empty-inner">
+                    <img src={require("./assets/start_chat.svg").default} alt=""></img>
+                    <div className="wk-chat-empty-brand">叙叨</div>
+                    <div className="wk-chat-empty-hint">选择左侧会话开始聊天</div>
+                </div>
             </div>} />
         }}>
 

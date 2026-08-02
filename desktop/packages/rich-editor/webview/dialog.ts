@@ -60,7 +60,7 @@ function ensureStyles() {
   font-size: 14px;
 }
 .wk-rich-dialog .wk-rich-dialog-actions button.primary {
-  background: var(--re-accent, #FF4500); border-color: var(--re-accent, #FF4500); color: #fff;
+  background: var(--re-accent, #0E7490); border-color: var(--re-accent, #0E7490); color: #fff;
 }
 `;
   document.head.appendChild(style);

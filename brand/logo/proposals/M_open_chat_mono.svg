@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Shudo Logo M Mono">
+  <title>Shudo M Mono</title>
+  <circle cx="188" cy="200" r="26" fill="#0E7490"/>
+  <circle cx="324" cy="200" r="26" fill="#0E7490"/>
+  <ellipse cx="256" cy="330" rx="78" ry="58" fill="#0E7490"/>
+  <ellipse cx="256" cy="326" rx="42" ry="28" fill="#ffffff"/>
+</svg>

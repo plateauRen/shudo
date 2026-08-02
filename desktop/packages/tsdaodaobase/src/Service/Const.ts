@@ -67,6 +67,7 @@ export class MessageContentTypeConst {
   static hermesCard: number = 21000
   static hermesAction: number = 21001
   static hermesTable: number = 21002
+  static hermesAudio: number = 21003
 
   // 音频通话消息号段 9900 - 9999
   static rtcResult:number = 9989 // 音视频通话结果

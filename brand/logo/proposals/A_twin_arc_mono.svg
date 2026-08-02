@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none" stroke="currentColor">
+  <title>叙叨 · A 回声 · mono</title>
+  <path d="M160 180 C120 230 120 310 168 360 C190 386 230 396 268 378" stroke-width="28" stroke-linecap="round" opacity="0.35"/>
+  <path d="M196 200 C166 236 168 300 204 336 C220 354 248 360 274 348" stroke-width="28" stroke-linecap="round" opacity="0.65"/>
+  <path d="M236 224 C218 248 220 292 244 316 C256 328 274 330 290 320" stroke-width="28" stroke-linecap="round"/>
+  <circle cx="318" cy="300" r="34" fill="currentColor" stroke="none"/>
+</svg>

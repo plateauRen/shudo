@@ -33,6 +33,8 @@ export * from './Utils/t2s'
 export * from './Utils/pinYin'
 export { default as FileHelper } from './Utils/filehelper'
 export *  from './Utils/filehelper'
+export * from './Service/SystemAccount'
+export * from './Service/BrandTheme'
 export { NotificationUtil, notificationUtil } from './Utils/NotificationUtil'
 export * from './Utils/NotificationUtil'
 
@@ -48,6 +50,10 @@ export * from "./Components/ListItem";
 export * from "./Components/IndexTable"
 export * from "./Components/UserSelect";
 export * from "./Components/MeInfo";
+export * from "./Components/TranslateSetting";
+export * from "./Components/ThemeSetting";
+export * from "./Components/FolderSetting";
+export * from "./Service/ShudoOrgManager";
 export * from "./Service/Context";
 export * from "./Components/SmallTableEdit";
 export * from "./Service/Convert";

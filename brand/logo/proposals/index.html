@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>叙叨 Logo 方案 · Shudo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=DM+Sans:wght@500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --theme: #0E7490;
+      --theme-2: #38BDF8;
+      --ink: #17141f;
+      --muted: #6b6574;
+      --paper: #f3efe8;
+      --card: #fffcf7;
+      --line: rgba(23, 20, 31, 0.1);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "DM Sans", "Noto Serif SC", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, color-mix(in srgb, var(--theme) 18%, transparent), transparent),
+        radial-gradient(900px 500px at 90% 0%, color-mix(in srgb, var(--theme-2) 16%, transparent), transparent),
+        var(--paper);
+      min-height: 100vh;
+    }
+    header {
+      padding: 48px 28px 20px;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+    .eyebrow {
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-size: 12px;
+      color: var(--theme);
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    h1 {
+      font-family: "Noto Serif SC", serif;
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 1.15;
+      margin: 0 0 12px;
+      font-weight: 700;
+    }
+    .lede {
+      max-width: 56ch;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.65;
+      margin: 0 0 24px;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .chip {
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chip.active {
+      border-color: var(--theme);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme) 18%, transparent);
+    }
+    .swatch {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--c1), var(--c2));
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 12px 28px 80px;
+      display: grid;
+      gap: 22px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 22px;
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 22px;
+      align-items: center;
+      box-shadow: 0 10px 40px rgba(23, 20, 31, 0.04);
+      position: relative;
+    }
+    .card.keep {
+      border-color: color-mix(in srgb, var(--theme) 45%, var(--line));
+      box-shadow: 0 12px 44px color-mix(in srgb, var(--theme) 16%, transparent);
+    }
+    .badge {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--theme);
+      background: color-mix(in srgb, var(--theme) 12%, #fff);
+      border-radius: 999px;
+      padding: 5px 10px;
+    }
+    @media (max-width: 720px) {
+      .card { grid-template-columns: 1fr; }
+    }
+    .mark-stage {
+      width: 160px; height: 160px;
+      margin: 0 auto;
+      border-radius: 36px;
+      overflow: hidden;
+      box-shadow: 0 16px 40px color-mix(in srgb, var(--theme) 22%, transparent);
+      background: #fff;
+    }
+    .mark-stage.wide {
+      width: 100%;
+      max-width: 280px;
+      height: 88px;
+      border-radius: 22px;
+    }
+    .mark-stage img { width: 100%; height: 100%; display: block; object-fit: contain; }
+    .meta h2 {
+      font-family: "Noto Serif SC", serif;
+      font-size: 28px;
+      margin: 0 0 6px;
+    }
+    .code {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--theme);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .meta p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 56ch;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+    }
+    .preview-box {
+      width: 72px; height: 72px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--theme);
+    }
+    .preview-box.dark {
+      background: #17181a;
+      border-color: transparent;
+    }
+    .preview-box img {
+      width: 48px; height: 48px;
+    }
+    .wordmark {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+    .wordmark img { width: 36px; height: 36px; border-radius: 10px; }
+    .wordmark .cn {
+      font-family: "Noto Serif SC", serif;
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .wordmark .en {
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .footer-note {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 28px 60px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .footer-note code {
+      background: rgba(0,0,0,0.05);
+      padding: 1px 6px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="eyebrow">Shudo Brand · Logo Lab v5.2</div>
+    <h1>叙叨 Logo · Solar 线封 × 文字</h1>
+    <p class="lede">
+      采用参考图线描信封（圆角框 + 顶盖 V + 底折断笔）：上标下字、笺内字、上下叠、左右排、浅底线封、折点高光、纯线封。
+      下方保留此前信件/字标方案对照。
+    </p>
+    <div class="toolbar" id="themes">
+      <button class="chip active" data-c1="#0E7490" data-c2="#38BDF8">
+        <span class="swatch" style="--c1:#0E7490;--c2:#38BDF8"></span>石青
+      </button>
+      <button class="chip" data-c1="#1B4D5C" data-c2="#5FA8B8">
+        <span class="swatch" style="--c1:#1B4D5C;--c2:#5FA8B8"></span>玄青
+      </button>
+      <button class="chip" data-c1="#1F7A4D" data-c2="#4ADE80">
+        <span class="swatch" style="--c1:#1F7A4D;--c2:#4ADE80"></span>松烟
+      </button>
+      <button class="chip" data-c1="#3B6D9A" data-c2="#7EB0D9">
+        <span class="swatch" style="--c1:#3B6D9A;--c2:#7EB0D9"></span>雾蓝
+      </button>
+    </div>
+  </header>
+
+  <main id="gallery"></main>
+
+  <p class="footer-note">
+    目录：<code>brand/logo/proposals/</code> · 刷新预览：
+    <a href="http://127.0.0.1:8765/index.html">http://127.0.0.1:8765/index.html</a><br />
+    选定编号后告诉我，可直接替换 App Icon / Web 登录 / 默认头像。
+  </p>
+
+  <script>
+    const schemes = [
+      {
+        id: "AL",
+        file: "AL_solar_letter.svg",
+        mono: "AL_solar_letter_mono.svg",
+        name: "线封字",
+        en: "Solar + Word",
+        pitch: "完整 Solar broken 线封在上，「叙叨」在下。最贴近参考线型。",
+      },
+      {
+        id: "AR",
+        file: "AR_solar_pure.svg",
+        mono: "AR_solar_pure_mono.svg",
+        name: "纯线封",
+        en: "Solar Pure",
+        pitch: "大号线封居中 + 底部细字。信封元素占比最大。",
+      },
+      {
+        id: "AM",
+        file: "AM_solar_song.svg",
+        mono: "AM_solar_song_mono.svg",
+        name: "笺内宋",
+        en: "Flap Frame + Song",
+        pitch: "圆角框 + 顶盖 V 作信框，框内宋体「叙叨」。",
+      },
+      {
+        id: "AN",
+        file: "AN_solar_stack.svg",
+        mono: "AN_solar_stack_mono.svg",
+        name: "上封下字",
+        en: "Stack",
+        pitch: "小号线封 + 大号黑体二字，品牌锁结构清晰。",
+      },
+      {
+        id: "AO",
+        file: "AO_solar_side.svg",
+        mono: "AO_solar_side_mono.svg",
+        name: "左封右字",
+        en: "Side",
+        pitch: "左线封、右竖排「叙叨」，适合方标里做中轴构图。",
+      },
+      {
+        id: "AP",
+        file: "AP_solar_paper.svg",
+        mono: "AP_solar_paper_mono.svg",
+        name: "浅底线封",
+        en: "Paper Solar",
+        pitch: "浅青绿底 + 石青线封与字，偏 Web / 登录浅色场景。",
+      },
+      {
+        id: "AQ",
+        file: "AQ_solar_accent.svg",
+        mono: "AQ_solar_accent_mono.svg",
+        name: "折点信",
+        en: "Fold Accent",
+        pitch: "线封折点加高光圆点（已读/新信），下承「叙叨」。",
+      },
+      {
+        id: "AF",
+        file: "AF_letter_fold.svg",
+        mono: "AF_letter_fold_mono.svg",
+        name: "折笺字",
+        en: "Folded Note + Word",
+        pitch: "折角信笺 + 对话尾，笺面写「叙叨」。信件感与聊天尾合一。",
+      },
+      {
+        id: "AG",
+        file: "AG_envelope.svg",
+        mono: "AG_envelope_mono.svg",
+        name: "信封面",
+        en: "Envelope Face",
+        pitch: "经典信封三角盖 + 下方面板「叙叨」，一眼可读的邮件/私信意象。",
+      },
+      {
+        id: "AH",
+        file: "AH_open_letter.svg",
+        mono: "AH_open_letter_mono.svg",
+        name: "开信笺",
+        en: "Open Letter",
+        pitch: "信纸竖出信封口，笺上竖排「叙叨」——打开一封叙说。",
+      },
+      {
+        id: "AI",
+        file: "AI_postage.svg",
+        mono: "AI_postage_mono.svg",
+        name: "邮戳片",
+        en: "Postcard",
+        pitch: "明信片构图：邮票角标 + 正文「叙叨」，偏书信往来。",
+      },
+      {
+        id: "AJ",
+        file: "AJ_letter_tail.svg",
+        mono: "AJ_letter_tail_mono.svg",
+        name: "信尾字",
+        en: "Letter Tail",
+        pitch: "折笺进化版：白笺横书「叙叨」+ 聊天气泡尖尾。",
+      },
+      {
+        id: "AK",
+        file: "AK_wax_seal.svg",
+        mono: "AK_wax_seal_mono.svg",
+        name: "火漆印",
+        en: "Wax Seal",
+        pitch: "折信为底，圆形火漆印内竖排「叙叨」，私密、郑重。",
+      },
+      {
+        id: "Y",
+        file: "Y_word_vertical.svg",
+        mono: "Y_word_vertical_mono.svg",
+        name: "竖叙",
+        en: "Vertical Song",
+        pitch: "宋体竖排「叙叨」白字压石青底。书卷感强，适合主 App Icon。",
+      },
+      {
+        id: "Z",
+        file: "Z_word_horizontal.svg",
+        mono: "Z_word_horizontal_mono.svg",
+        name: "横叙",
+        en: "Horizontal Hei",
+        pitch: "黑体横排二字铺满方标，现代、清晰，远看仍可读。",
+      },
+      {
+        id: "AA",
+        file: "AA_word_bubble.svg",
+        mono: "AA_word_bubble_mono.svg",
+        name: "泡字",
+        en: "Word Bubble",
+        pitch: "对话气泡内嵌「叙叨」——字标 + IM 语义合一。",
+      },
+      {
+        id: "AB",
+        file: "AB_word_seal.svg",
+        mono: "AB_word_seal_mono.svg",
+        name: "印叙",
+        en: "Seal",
+        pitch: "双线印章框 + 宋体黑竖排，偏品牌印信、东方气质。",
+      },
+      {
+        id: "AC",
+        file: "AC_word_lockup.svg",
+        mono: "AC_word_lockup_mono.svg",
+        name: "中英锁",
+        en: "CN·EN Lockup",
+        pitch: "「叙叨」+ 分隔线 + SHUDO，完整品牌锁，适合启动页/关于页。",
+      },
+      {
+        id: "AD",
+        file: "AD_word_banner.svg",
+        mono: "AD_word_banner_mono.svg",
+        name: "横幅字",
+        en: "Banner",
+        pitch: "横向字标：叙叨 | SHUDO，适合导航栏、登录页顶栏、桌面标题。",
+        wide: true,
+      },
+      {
+        id: "AE",
+        file: "AE_word_paper.svg",
+        mono: "AE_word_paper_mono.svg",
+        name: "纸叙",
+        en: "Paper",
+        pitch: "浅青绿纸感底 + 石青宋体竖排，偏轻产品 / Web 登录。",
+      },
+      {
+        id: "R",
+        file: "R_dialogue.svg",
+        mono: "R_dialogue_mono.svg",
+        name: "对白",
+        en: "Dialogue",
+        pitch: "左来右往双气泡叠压——最直接的 IM 对话结构，收发一眼可读。",
+      },
+      {
+        id: "S",
+        file: "S_typing.svg",
+        mono: "S_typing_mono.svg",
+        name: "输入中",
+        en: "Typing",
+        pitch: "单气泡 + 三点省略。行业通用「正在输入」，产品感干净。",
+      },
+      {
+        id: "T",
+        file: "T_thread.svg",
+        mono: "T_thread_mono.svg",
+        name: "会话条",
+        en: "Thread",
+        pitch: "左短右长消息条交错，像会话列表缩影，偏桌面 IM。",
+      },
+      {
+        id: "U",
+        file: "U_reply.svg",
+        mono: "U_reply_mono.svg",
+        name: "回嵌",
+        en: "Reply Nest",
+        pitch: "大气泡内嵌引用条 + 小回复泡，对应现代 IM 的引用回复。",
+      },
+      {
+        id: "V",
+        file: "V_send.svg",
+        mono: "V_send_mono.svg",
+        name: "寄出",
+        en: "Send",
+        pitch: "块面发送箭头，强调「发出一条」的动作，适合主 App Icon。",
+      },
+      {
+        id: "W",
+        file: "W_nodes.svg",
+        mono: "W_nodes_mono.svg",
+        name: "双端",
+        en: "Peers",
+        pitch: "两端头像节点 + 连接条，点题端到端私聊关系。",
+      },
+      {
+        id: "X",
+        file: "X_presence.svg",
+        mono: "X_presence_mono.svg",
+        name: "在线环",
+        en: "Presence",
+        pitch: "信号环 + 中心气泡三点，在线状态与聊天语义合一。",
+      },
+      {
+        id: "D",
+        file: "D_folded_note.svg",
+        mono: "D_folded_note_mono.svg",
+        name: "折笺",
+        en: "Folded Note",
+        pitch: "折角信笺 + 对话尾。保留对照。",
+        keep: true,
+      },
+    ];
+
+    const gallery = document.getElementById("gallery");
+    gallery.innerHTML = schemes.map((s) => `
+      <article class="card ${s.keep ? "keep" : ""}">
+        ${s.keep ? '<div class="badge">保留</div>' : ""}
+        <div class="mark-stage ${s.wide ? "wide" : ""}"><img src="${s.file}?v=10" alt="${s.name}" /></div>
+        <div class="meta">
+          <div class="code">方案 ${s.id} · ${s.en}</div>
+          <h2>${s.name}</h2>
+          <p>${s.pitch}</p>
+          <div class="row">
+            <div class="preview-box" title="浅色底 · 单色标" style="${s.wide ? "width:140px;height:48px;border-radius:12px" : ""}">
+              <img src="${s.mono}?v=10" alt="" style="${s.wide ? "width:120px;height:36px" : ""}" />
+            </div>
+            <div class="preview-box dark" title="深色底 · 单色标" style="${s.wide ? "width:140px;height:48px;border-radius:12px" : ""}">
+              <img src="${s.mono}?v=10" alt="" style="filter: brightness(0) invert(1);${s.wide ? "width:120px;height:36px" : ""}" />
+            </div>
+            ${s.wide ? "" : `<div class="wordmark">
+              <img src="${s.file}?v=10" alt="" />
+              <div>
+                <div class="cn">叙叨</div>
+                <div class="en">SHUDO</div>
+              </div>
+            </div>`}
+          </div>
+        </div>
+      </article>
+    `).join("");
+
+    document.getElementById("themes").addEventListener("click", (e) => {
+      const btn = e.target.closest(".chip");
+      if (!btn) return;
+      document.querySelectorAll(".chip").forEach((c) => c.classList.remove("active"));
+      btn.classList.add("active");
+      document.documentElement.style.setProperty("--theme", btn.dataset.c1);
+      document.documentElement.style.setProperty("--theme-2", btn.dataset.c2);
+    });
+  </script>
+</body>
+</html>

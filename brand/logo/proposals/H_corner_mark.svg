@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>叙叨 · 方案 H · 叙点</title>
+  <defs>
+    <linearGradient id="h" x1="48" y1="48" x2="464" y2="464" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0E7490"/><stop offset="100%" stop-color="#0C4A5C"/>
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="256" fill="url(#h)"/>
+  <!-- calligraphic vertical -->
+  <path d="M236 120
+           C252 120 268 128 268 150
+           V300
+           C268 330 248 348 220 348
+           C200 348 186 336 186 318
+           C186 300 200 292 216 296
+           C228 300 236 292 236 278
+           V150
+           C236 132 236 120 236 120Z" fill="#fff"/>
+  <!-- horizontal dash -->
+  <path d="M186 210 H300" stroke="#fff" stroke-width="26" stroke-linecap="round"/>
+  <!-- period / 叨 -->
+  <circle cx="330" cy="348" r="28" fill="#fff"/>
+</svg>

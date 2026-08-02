@@ -61,8 +61,18 @@
     NSString *content = payload[@"content"];
     self.contentText = [content isKindOfClass:[NSString class]] ? content : (self.title ?: @"");
     id columns = payload[@"columns"];
+    if ([columns isKindOfClass:[NSString class]]) {
+        NSData *d = [(NSString *)columns dataUsingEncoding:NSUTF8StringEncoding];
+        id parsed = d ? [NSJSONSerialization JSONObjectWithData:d options:0 error:nil] : nil;
+        columns = [parsed isKindOfClass:[NSArray class]] ? parsed : @[];
+    }
     self.columns = [columns isKindOfClass:[NSArray class]] ? columns : @[];
     id rows = payload[@"rows"];
+    if ([rows isKindOfClass:[NSString class]]) {
+        NSData *d = [(NSString *)rows dataUsingEncoding:NSUTF8StringEncoding];
+        id parsed = d ? [NSJSONSerialization JSONObjectWithData:d options:0 error:nil] : nil;
+        rows = [parsed isKindOfClass:[NSArray class]] ? parsed : @[];
+    }
     self.rows = [rows isKindOfClass:[NSArray class]] ? rows : @[];
     id meta = payload[@"meta"];
     self.meta = [meta isKindOfClass:[NSDictionary class]] ? meta : nil;

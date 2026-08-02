@@ -47,11 +47,14 @@ class Login extends Component<any, LoginState> {
             return <div className="wk-login">
                 <div className="wk-login-content">
                     <div className="wk-login-content-phonelogin" style={{ "display": vm.loginType === LoginType.phone ? "block" : "none" }}>
-                        <div className="wk-login-content-logo">
-                            <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="logo" />
-                        </div>
-                        <div className="wk-login-content-slogan">
-                            更愉快的与朋友交流
+                        <div className="wk-login-brand">
+                            <div className="wk-login-content-logo">
+                                <img src={WKApp.config.brandMarkSrc(128)} alt="叙叨" />
+                            </div>
+                            <h1 className="wk-login-brand-name">叙叨</h1>
+                            <div className="wk-login-content-slogan">
+                                把重要的对话，说清楚
+                            </div>
                         </div>
                         <div className="wk-login-content-form">
                             <input type="text" placeholder="手机号 / 邮箱" autoComplete="username" onChange={(v) => {
@@ -89,7 +92,7 @@ class Login extends Component<any, LoginState> {
                         <Spin size="large" spinning={vm.qrcodeLoading}>
                             <div className="wk-login-content-scanlogin-qrcode">
                                 {
-                                    vm.qrcodeLoading || !vm.qrcode ? undefined : <QRCode value={vm.qrcode} size={280} fgColor={WKApp.config.themeColor}></QRCode>
+                                    vm.qrcodeLoading || !vm.qrcode ? undefined : <QRCode value={vm.qrcode} size={240} fgColor={WKApp.config.themeColor}></QRCode>
                                 }
                                 {
                                     <div className={classNames("wk-login-content-scanlogin-qrcode-avatar", vm.showAvatar() ? "wk-login-content-scanlogin-qrcode-avatar-show" : undefined)}>

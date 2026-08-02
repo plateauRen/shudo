@@ -43,6 +43,16 @@ static const NSInteger kMaxRows = 200;
     return vc;
 }
 
++ (NSString *)escapeHTML:(NSString *)s {
+    if (!s.length) return @"";
+    NSMutableString *out = [s mutableCopy];
+    [out replaceOccurrencesOfString:@"&" withString:@"&amp;" options:0 range:NSMakeRange(0, out.length)];
+    [out replaceOccurrencesOfString:@"<" withString:@"&lt;" options:0 range:NSMakeRange(0, out.length)];
+    [out replaceOccurrencesOfString:@">" withString:@"&gt;" options:0 range:NSMakeRange(0, out.length)];
+    [out replaceOccurrencesOfString:@"\"" withString:@"&quot;" options:0 range:NSMakeRange(0, out.length)];
+    return out;
+}
+
 + (NSString *)plainTextFromTableContent:(WKHermesTableContent *)content {
     if (!content) return @"";
     NSMutableString *out = [NSMutableString string];
@@ -88,6 +98,139 @@ static const NSInteger kMaxRows = 200;
         [out appendString:content.contentText];
     }
     return [out stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+}
+
++ (NSString *)htmlFromTableContent:(WKHermesTableContent *)content {
+    if (!content) return @"";
+    NSArray *columns = content.columns ?: @[];
+    NSArray *rows = content.rows ?: @[];
+    if (columns.count == 0) return @"";
+
+    NSMutableString *html = [NSMutableString stringWithString:@"<table>"];
+    if (content.title.length || content.caption.length) {
+        NSMutableString *cap = [NSMutableString string];
+        if (content.title.length) [cap appendString:content.title];
+        if (content.caption.length) {
+            if (cap.length) [cap appendString:@" — "];
+            [cap appendString:content.caption];
+        }
+        [html appendFormat:@"<caption>%@</caption>", [self escapeHTML:cap]];
+    }
+    [html appendString:@"<thead><tr>"];
+    for (NSDictionary *col in columns) {
+        if (![col isKindOfClass:[NSDictionary class]]) continue;
+        NSString *label = [col[@"label"] isKindOfClass:[NSString class]] ? col[@"label"] : @"";
+        if (!label.length) label = [col[@"id"] isKindOfClass:[NSString class]] ? col[@"id"] : @"";
+        [html appendFormat:@"<th>%@</th>", [self escapeHTML:label]];
+    }
+    [html appendString:@"</tr></thead><tbody>"];
+    NSInteger limit = MIN((NSInteger)rows.count, kMaxRows);
+    for (NSInteger r = 0; r < limit; r++) {
+        NSDictionary *row = rows[r];
+        if (![row isKindOfClass:[NSDictionary class]]) continue;
+        [html appendString:@"<tr>"];
+        for (NSDictionary *col in columns) {
+            if (![col isKindOfClass:[NSDictionary class]]) continue;
+            NSString *colId = [col[@"id"] isKindOfClass:[NSString class]] ? col[@"id"] : @"";
+            id raw = colId.length ? row[colId] : nil;
+            NSString *val = [raw isKindOfClass:[NSString class]] ? raw : ([raw description] ?: @"");
+            [html appendFormat:@"<td>%@</td>", [self escapeHTML:val]];
+        }
+        [html appendString:@"</tr>"];
+    }
+    [html appendString:@"</tbody></table>"];
+    return html;
+}
+
++ (void)writePasteboardPlain:(NSString *)plain html:(NSString *)html {
+    if (!plain.length && !html.length) return;
+    UIPasteboard *pb = [UIPasteboard generalPasteboard];
+    if (html.length) {
+        NSMutableDictionary *item = [NSMutableDictionary dictionary];
+        if (plain.length) {
+            item[(NSString *)@"public.utf8-plain-text"] = plain;
+        }
+        NSData *htmlData = [html dataUsingEncoding:NSUTF8StringEncoding];
+        if (htmlData) {
+            item[(NSString *)@"public.html"] = htmlData;
+        }
+        pb.items = @[ item ];
+    } else {
+        pb.string = plain ?: @"";
+    }
+}
+
++ (NSString *)plainTextFromMessageHTML:(NSString *)html {
+    if (!html.length) return @"";
+    NSMutableString *work = [html mutableCopy];
+
+    // Normalize table structure to TSV before stripping tags.
+    NSRegularExpression *tableRe = [NSRegularExpression regularExpressionWithPattern:@"<table\\b[\\s\\S]*?</table>"
+                                                                             options:NSRegularExpressionCaseInsensitive
+                                                                               error:nil];
+    NSArray<NSTextCheckingResult *> *tables = [tableRe matchesInString:work options:0 range:NSMakeRange(0, work.length)];
+    for (NSTextCheckingResult *m in [tables reverseObjectEnumerator]) {
+        NSString *tableHtml = [work substringWithRange:m.range];
+        NSString *tsv = [self tsvFromHTMLTable:tableHtml];
+        if (tsv.length) {
+            [work replaceCharactersInRange:m.range withString:[NSString stringWithFormat:@"\n%@\n", tsv]];
+        }
+    }
+
+    NSRegularExpression *brRe = [NSRegularExpression regularExpressionWithPattern:@"<br\\s*/?>" options:NSRegularExpressionCaseInsensitive error:nil];
+    [brRe replaceMatchesInString:work options:0 range:NSMakeRange(0, work.length) withTemplate:@"\n"];
+    NSRegularExpression *blockRe = [NSRegularExpression regularExpressionWithPattern:@"</(p|div|li|h[1-6]|blockquote|pre)\\s*>" options:NSRegularExpressionCaseInsensitive error:nil];
+    [blockRe replaceMatchesInString:work options:0 range:NSMakeRange(0, work.length) withTemplate:@"\n"];
+    NSRegularExpression *tagRe = [NSRegularExpression regularExpressionWithPattern:@"<[^>]+>" options:0 error:nil];
+    [tagRe replaceMatchesInString:work options:0 range:NSMakeRange(0, work.length) withTemplate:@""];
+
+    // Decode a few common entities
+    NSDictionary *entities = @{
+        @"&nbsp;": @" ",
+        @"&amp;": @"&",
+        @"&lt;": @"<",
+        @"&gt;": @">",
+        @"&quot;": @"\"",
+        @"&#39;": @"'",
+    };
+    for (NSString *k in entities) {
+        [work replaceOccurrencesOfString:k withString:entities[k] options:NSCaseInsensitiveSearch range:NSMakeRange(0, work.length)];
+    }
+    while ([work rangeOfString:@"\n\n\n"].location != NSNotFound) {
+        [work replaceOccurrencesOfString:@"\n\n\n" withString:@"\n\n" options:0 range:NSMakeRange(0, work.length)];
+    }
+    return [work stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+}
+
++ (NSString *)tsvFromHTMLTable:(NSString *)tableHtml {
+    if (!tableHtml.length) return @"";
+    NSMutableArray<NSString *> *lines = [NSMutableArray array];
+    NSRegularExpression *rowRe = [NSRegularExpression regularExpressionWithPattern:@"<tr\\b[\\s\\S]*?</tr>"
+                                                                           options:NSRegularExpressionCaseInsensitive
+                                                                             error:nil];
+    NSRegularExpression *cellRe = [NSRegularExpression regularExpressionWithPattern:@"<(td|th)\\b[^>]*>([\\s\\S]*?)</\\1>"
+                                                                            options:NSRegularExpressionCaseInsensitive
+                                                                              error:nil];
+    NSRegularExpression *tagRe = [NSRegularExpression regularExpressionWithPattern:@"<[^>]+>" options:0 error:nil];
+    NSArray<NSTextCheckingResult *> *rows = [rowRe matchesInString:tableHtml options:0 range:NSMakeRange(0, tableHtml.length)];
+    for (NSTextCheckingResult *rowMatch in rows) {
+        NSString *rowHtml = [tableHtml substringWithRange:rowMatch.range];
+        NSMutableArray<NSString *> *cells = [NSMutableArray array];
+        NSArray<NSTextCheckingResult *> *cellMatches = [cellRe matchesInString:rowHtml options:0 range:NSMakeRange(0, rowHtml.length)];
+        for (NSTextCheckingResult *cellMatch in cellMatches) {
+            if (cellMatch.numberOfRanges < 3) continue;
+            NSString *inner = [rowHtml substringWithRange:[cellMatch rangeAtIndex:2]];
+            NSMutableString *cell = [inner mutableCopy];
+            [tagRe replaceMatchesInString:cell options:0 range:NSMakeRange(0, cell.length) withTemplate:@""];
+            [cell replaceOccurrencesOfString:@"\t" withString:@" " options:0 range:NSMakeRange(0, cell.length)];
+            [cell replaceOccurrencesOfString:@"\n" withString:@" " options:0 range:NSMakeRange(0, cell.length)];
+            [cells addObject:[cell stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
+        }
+        if (cells.count) {
+            [lines addObject:[cells componentsJoinedByString:@"\t"]];
+        }
+    }
+    return [lines componentsJoinedByString:@"\n"];
 }
 
 - (void)viewDidLoad {
@@ -343,8 +486,15 @@ static const NSInteger kMaxRows = 200;
 
 - (void)copyAllText {
     NSString *text = self.textView.text ?: self.selectableText ?: @"";
-    if (!text.length) return;
-    [UIPasteboard generalPasteboard].string = text;
+    NSString *html = nil;
+    if (self.tableContent) {
+        html = [WKBubbleMessageDetailVC htmlFromTableContent:self.tableContent];
+        if (!text.length) {
+            text = [WKBubbleMessageDetailVC plainTextFromTableContent:self.tableContent];
+        }
+    }
+    if (!text.length && !html.length) return;
+    [WKBubbleMessageDetailVC writePasteboardPlain:text html:html];
     [self.view showHUDWithHide:@"已复制"];
 }
 

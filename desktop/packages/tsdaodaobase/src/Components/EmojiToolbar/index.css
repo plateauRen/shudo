@@ -1,8 +1,23 @@
 
 .wk-emojitoolbar {
-    padding: 10px;
 }
 
+.wk-emojitoolbar-content {
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wk-emojitoolbar-content:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+body[theme-mode=dark] .wk-emojitoolbar-content:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
 
 .wk-emojitoolbar img {
     width: 20px;

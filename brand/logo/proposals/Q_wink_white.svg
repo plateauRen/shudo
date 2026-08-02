@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Shudo Logo Q White Wink">
+  <title>Shudo Q White Wink</title>
+  <defs>
+    <linearGradient id="qg" x1="64" y1="448" x2="448" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0E7490"/>
+      <stop offset="55%" stop-color="#155E75"/>
+      <stop offset="100%" stop-color="#122F38"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#qg)"/>
+  <circle cx="188" cy="214" r="28" fill="#F8FAFC"/>
+  <path d="M292 196c28 8 44 28 44 48" fill="none" stroke="#F8FAFC" stroke-width="36" stroke-linecap="round"/>
+  <path d="M156 318c36 56 164 56 200 0" fill="none" stroke="#F8FAFC" stroke-width="36" stroke-linecap="round"/>
+</svg>

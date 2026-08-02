@@ -8,9 +8,11 @@
 #import "WKMeQRCodeVC.h"
 #import "WKActionSheetView2.h"
 #import "LBXScanNative.h"
+#import "WKLiquidGlassHelper.h"
 @interface WKMeQRCodeVC ()
 
 @property(nonatomic,strong) UIView *qrcodeBoxView; // 整个白色容器
+@property(nonatomic,strong,nullable) UIVisualEffectView *qrcodeGlassView;
 
 @property(nonatomic,strong) UIImageView *qrcodeImgView; // 二维码图片
 
@@ -122,9 +124,18 @@
     if(!_qrcodeBoxView) {
         CGFloat width = WKScreenWidth - 40.0f;
         _qrcodeBoxView = [[UIView alloc] initWithFrame:CGRectMake(20.0f, 60.0f +[self visibleRect].origin.y ,width, width + 140.0f)];
-        [_qrcodeBoxView setBackgroundColor:[WKApp shared].config.cellBackgroundColor];
         _qrcodeBoxView.layer.masksToBounds = YES;
-        _qrcodeBoxView.layer.cornerRadius = 10.0f;
+        _qrcodeBoxView.layer.cornerRadius = 16.0f;
+        if ([WKLiquidGlassHelper isLiquidGlassAvailable]) {
+            [_qrcodeBoxView setBackgroundColor:[UIColor clearColor]];
+            self.qrcodeGlassView = [WKLiquidGlassHelper installInView:_qrcodeBoxView
+                                                        cornerRadius:16
+                                                         interactive:NO
+                                                          solidColor:nil];
+            self.qrcodeGlassView.frame = _qrcodeBoxView.bounds;
+        } else {
+            [_qrcodeBoxView setBackgroundColor:[WKApp shared].config.cellBackgroundColor];
+        }
     }
     return _qrcodeBoxView;
 }

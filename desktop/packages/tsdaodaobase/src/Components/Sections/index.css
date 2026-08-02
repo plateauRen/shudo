@@ -1,7 +1,3 @@
-.wk-sections {
-    
-}
-
 .wk-section {
   margin-top: 10px;
 }
@@ -10,22 +6,15 @@
   margin-top: 0px;
 }
 
-.wk-section-rows {
-
-}
-
 .wk-section-title {
-  padding: 5px 15px;
-  color: var( --wk-color-font-tip);
-  font-size: 13px;
-}
-
-.wk-section-row {
-
+  padding: 6px 12px;
+  color: var(--wk-text-tertiary);
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .wk-section-subtitle {
-  padding: 5px 15px;
-  color: var( --wk-color-font-tip);
-  font-size: 13px;
+  padding: 6px 12px;
+  color: var(--wk-text-tertiary);
+  font-size: 12px;
 }

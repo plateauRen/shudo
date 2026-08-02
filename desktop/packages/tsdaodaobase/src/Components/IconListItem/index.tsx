@@ -4,7 +4,7 @@ import { Component, ReactNode } from "react";
 import "./index.css"
 
 export interface IconListItemProps {
-    icon: string
+    icon: string | ReactNode
     title: string
     backgroudColor?: string
     onClick?: () => void
@@ -16,10 +16,10 @@ export default class IconListItem extends Component<IconListItemProps> {
 
     render(): ReactNode {
         const { icon, title, backgroudColor, onClick, badge } = this.props
-        return <div className="wk-iconlistitem" style={{ "backgroundColor": backgroudColor }} onClick={onClick}>
+        return <div className="wk-iconlistitem" onClick={onClick}>
             <div className="wk-iconlistitem-content">
-                <div className="wk-iconlistitem-content-icon">
-                    <img src={icon}></img>
+                <div className="wk-iconlistitem-content-icon" style={backgroudColor ? { backgroundColor: backgroudColor } : undefined}>
+                    {typeof icon === "string" ? <img src={icon} alt=""></img> : icon}
                 </div>
                 <div className="wk-iconlistitem-content-title">
                     {title}

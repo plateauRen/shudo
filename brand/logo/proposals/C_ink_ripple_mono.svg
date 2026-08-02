@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
+  <title>叙叨 · C 星叙 · mono</title>
+  <circle cx="256" cy="256" r="132" fill="none" stroke="currentColor" stroke-width="14" opacity="0.28" stroke-dasharray="18 22"/>
+  <circle cx="180" cy="210" r="28" opacity="0.55"/>
+  <circle cx="320" cy="190" r="36"/>
+  <circle cx="270" cy="320" r="44" opacity="0.85"/>
+</svg>

@@ -10,8 +10,13 @@
 #import "WKConversationContextImpl.h"
 #import "WKInlineQueryResult.h"
 #import "WKInlineQueryManager.h"
-@implementation WKConversationView (Robot)
+#import "WKSlashCommandSuggestView.h"
+#import <objc/runtime.h>
 
+static const void *kSlashSuggestViewKey = &kSlashSuggestViewKey;
+static const void *kSlashSuggestOnKey = &kSlashSuggestOnKey;
+
+@implementation WKConversationView (Robot)
 
 -(void) initRobot {
     __weak typeof(self) weakSelf = self;
@@ -30,6 +35,7 @@
 
 -(void) inputTextChange {
 
+    [self triggerSlashCommandSuggestIfNeed];
     [self triggerRobotInlineSearchIfNeed];
     
     if(self.robotInlineOn && self.currentRobotInline && self.currentRobotInline.inlineOn) {
@@ -48,6 +54,212 @@
             [self requestAndShowRobotInlineQuery:query username:self.currentRobotInline.username offset:@""];
         }
     }
+}
+
+#pragma mark - Slash command suggest (/)
+
+-(BOOL) slashSuggestOn {
+    return [objc_getAssociatedObject(self, kSlashSuggestOnKey) boolValue];
+}
+
+-(void) setSlashSuggestOn:(BOOL)on {
+    objc_setAssociatedObject(self, kSlashSuggestOnKey, @(on), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+-(WKSlashCommandSuggestView *)slashSuggestView {
+    WKSlashCommandSuggestView *view = objc_getAssociatedObject(self, kSlashSuggestViewKey);
+    if (!view) {
+        view = [[WKSlashCommandSuggestView alloc] initWithFrame:CGRectMake(0, 0, self.lim_width, 0)];
+        __weak typeof(self) weakSelf = self;
+        view.onSelect = ^(WKSlashCommandItem *item) {
+            [weakSelf applySlashCommand:item];
+        };
+        objc_setAssociatedObject(self, kSlashSuggestViewKey, view, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
+    return view;
+}
+
+/// Hermes / 机器人常用斜杠指令（中文说明兜底）
+-(NSArray<WKSlashCommandItem *> *)defaultHermesSlashCommandsWithRobotID:(NSString *)robotID {
+    NSArray *pairs = @[
+        @[@"/new", @"开始新对话"],
+        @[@"/reset", @"重置会话（同 /new）"],
+        @[@"/model", @"切换 AI 模型"],
+        @[@"/personality", @"设置人格"],
+        @[@"/retry", @"重试上一轮回复"],
+        @[@"/undo", @"撤销上一轮"],
+        @[@"/compress", @"压缩上下文"],
+        @[@"/usage", @"查看用量"],
+        @[@"/insights", @"用量洞察"],
+        @[@"/skills", @"浏览技能列表"],
+        @[@"/stop", @"中断当前任务"],
+        @[@"/status", @"查看平台状态"],
+        @[@"/help", @"显示帮助"],
+        @[@"/approve", @"批准待确认操作"],
+        @[@"/deny", @"拒绝待确认操作"],
+    ];
+    NSMutableArray<WKSlashCommandItem *> *items = [NSMutableArray array];
+    for (NSArray *p in pairs) {
+        [items addObject:[WKSlashCommandItem cmd:p[0] remark:p[1] robotID:robotID]];
+    }
+    return items;
+}
+
+-(NSString *)preferredRobotIDForSlash {
+    if (self.robotMenus.count > 0) {
+        WKRobotMenus *m = self.robotMenus.firstObject;
+        if (m.robotID.length > 0) return m.robotID;
+    }
+    if (self.channel.channelType == WK_PERSON) {
+        return self.channel.channelId;
+    }
+    return nil;
+}
+
+-(NSDictionary<NSString *, NSString *> *)chineseRemarkLookup {
+    static NSDictionary *map;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        map = @{
+            @"/new": @"开始新对话",
+            @"/reset": @"重置会话（同 /new）",
+            @"/model": @"切换 AI 模型",
+            @"/personality": @"设置人格",
+            @"/retry": @"重试上一轮回复",
+            @"/undo": @"撤销上一轮",
+            @"/compress": @"压缩上下文",
+            @"/usage": @"查看用量",
+            @"/insights": @"用量洞察",
+            @"/skills": @"浏览技能列表",
+            @"/stop": @"中断当前任务",
+            @"/status": @"查看平台状态",
+            @"/help": @"显示帮助",
+            @"/approve": @"批准待确认操作",
+            @"/deny": @"拒绝待确认操作",
+        };
+    });
+    return map;
+}
+
+-(NSArray<WKSlashCommandItem *> *)slashCommandSourceItems {
+    NSString *robotID = [self preferredRobotIDForSlash];
+    NSMutableArray<WKSlashCommandItem *> *items = [NSMutableArray array];
+    NSMutableSet<NSString *> *seen = [NSMutableSet set];
+    NSDictionary *zh = [self chineseRemarkLookup];
+
+    if (self.robotMenus.count > 0) {
+        for (WKRobotMenus *m in self.robotMenus) {
+            NSString *cmd = m.cmd ?: @"";
+            if (cmd.length == 0) continue;
+            if (![cmd hasPrefix:@"/"]) {
+                cmd = [@"/" stringByAppendingString:cmd];
+            }
+            NSString *key = cmd.lowercaseString;
+            if ([seen containsObject:key]) continue;
+            [seen addObject:key];
+            NSString *remark = m.remark ?: @"";
+            // 服务端无说明或非中文时，用本地中文补全
+            BOOL hasCJK = [remark rangeOfCharacterFromSet:[NSCharacterSet characterSetWithRange:NSMakeRange(0x4E00, 0x9FFF)]].location != NSNotFound;
+            if (remark.length == 0 || !hasCJK) {
+                NSString *local = zh[key] ?: zh[cmd];
+                if (local.length > 0) remark = local;
+            }
+            if (remark.length == 0) remark = @"执行指令";
+            [items addObject:[WKSlashCommandItem cmd:cmd remark:remark robotID:m.robotID.length ? m.robotID : robotID]];
+        }
+    }
+
+    // API 无 menus 时用 Hermes 中文兜底；有 menus 时也把未覆盖的常用指令补上
+    for (WKSlashCommandItem *fb in [self defaultHermesSlashCommandsWithRobotID:robotID]) {
+        NSString *key = fb.cmd.lowercaseString;
+        if ([seen containsObject:key]) continue;
+        [seen addObject:key];
+        [items addObject:fb];
+    }
+    return items;
+}
+
+-(void) triggerSlashCommandSuggestIfNeed {
+    NSString *text = self.input.textView.text ?: @"";
+    text = [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+
+    // 高亮输入中不弹
+    NSString *lang = self.input.textView.internalTextView.textInputMode.primaryLanguage;
+    if ([lang isEqualToString:@"zh-Hans"]) {
+        UITextRange *selectedRange = [self.input.textView.internalTextView markedTextRange];
+        if (selectedRange) {
+            return;
+        }
+    }
+
+    if (![text hasPrefix:@"/"]) {
+        [self hideSlashCommandSuggest];
+        return;
+    }
+
+    // 仅在机器人会话或已有 menus 时启用（个人频道视为对方可能是机器人）
+    BOOL canSuggest = (self.robotMenus.count > 0)
+        || (self.channel.channelType == WK_PERSON)
+        || self.input.showMenusBtn;
+    if (!canSuggest) {
+        [self hideSlashCommandSuggest];
+        return;
+    }
+
+    NSArray *parts = [text componentsSeparatedByString:@" "];
+    NSString *token = parts.firstObject ?: text;
+    NSString *tokenLower = token.lowercaseString;
+
+    NSArray<WKSlashCommandItem *> *source = [self slashCommandSourceItems];
+    NSMutableArray<WKSlashCommandItem *> *matched = [NSMutableArray array];
+    // 1) 指令前缀：/ 或 /ne → 匹配 /new
+    for (WKSlashCommandItem *item in source) {
+        if ([item.cmd.lowercaseString hasPrefix:tokenLower]) {
+            [matched addObject:item];
+        }
+    }
+    // 2) 中文说明模糊：/帮助、/新对话
+    if (matched.count == 0 && token.length > 1) {
+        NSString *q = [token substringFromIndex:1];
+        for (WKSlashCommandItem *item in source) {
+            if (q.length > 0 &&
+                ([item.remark containsString:q] ||
+                 [item.cmd.lowercaseString containsString:q.lowercaseString])) {
+                [matched addObject:item];
+            }
+        }
+    }
+
+    if (matched.count == 0) {
+        [self hideSlashCommandSuggest];
+        return;
+    }
+
+    self.slashSuggestOn = YES;
+    WKSlashCommandSuggestView *panel = self.slashSuggestView;
+    panel.lim_width = self.lim_width;
+    [panel reloadItems:matched];
+    [self.conversationContext setInputTopView:panel];
+}
+
+-(void) hideSlashCommandSuggest {
+    if (!self.slashSuggestOn && self.conversationContext.inputTopView != self.slashSuggestView) {
+        return;
+    }
+    self.slashSuggestOn = NO;
+    if (self.conversationContext.inputTopView == self.slashSuggestView) {
+        [self.conversationContext setInputTopView:nil];
+    }
+}
+
+-(void) applySlashCommand:(WKSlashCommandItem *)item {
+    if (!item.cmd.length) return;
+    NSString *robotID = item.robotID ?: [self preferredRobotIDForSlash];
+    [self.conversationContext inputSetText:@""];
+    [self hideSlashCommandSuggest];
+    [self.conversationContext sendTextMessage:item.cmd
+                                     entities:@[[WKMessageEntity type:WKEntityTypeRobotCommand range:NSMakeRange(0, item.cmd.length)]]
+                                      robotID:robotID];
 }
 
 
@@ -104,6 +316,11 @@
             [self cancelInlineQuery];
         }
         
+        return;
+    }
+
+    // 斜杠联想优先，不与 @inline 抢 topView
+    if (self.slashSuggestOn) {
         return;
     }
     
@@ -198,7 +415,19 @@
     __weak typeof(self) weakSelf = self;
     if(self.robotMenus) {
         for (WKRobotMenus *m in self.robotMenus) {
-            [items addObject:[WKRobotMenusItem cmd:m.cmd iconURL:[WKAvatarUtil getAvatar:m.robotID] remark:m.remark onClick:^{
+            NSString *cmd = m.cmd ?: @"";
+            NSString *remark = m.remark ?: @"";
+            NSDictionary *zh = [self chineseRemarkLookup];
+            NSString *cmdKey = cmd;
+            if (cmdKey.length && ![cmdKey hasPrefix:@"/"]) {
+                cmdKey = [@"/" stringByAppendingString:cmdKey];
+            }
+            BOOL hasCJK = [remark rangeOfCharacterFromSet:[NSCharacterSet characterSetWithRange:NSMakeRange(0x4E00, 0x9FFF)]].location != NSNotFound;
+            if (remark.length == 0 || !hasCJK) {
+                NSString *local = zh[cmdKey.lowercaseString] ?: zh[cmdKey];
+                if (local.length > 0) remark = local;
+            }
+            [items addObject:[WKRobotMenusItem cmd:cmd iconURL:[WKAvatarUtil getAvatar:m.robotID] remark:remark onClick:^{
                 [weakSelf.conversationContext sendTextMessage:m.cmd entities:@[[WKMessageEntity type:WKEntityTypeRobotCommand range:NSMakeRange(0, m.cmd.length)]] robotID:m.robotID];
                 [weakSelf dismissRobotMenus];
             }]];

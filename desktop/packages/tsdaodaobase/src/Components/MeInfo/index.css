@@ -1,6 +1,5 @@
-
 .wk-meinfo {
-    background-color: var(--wk-color-secondary);
+    background-color: var(--wk-surface-sunken);
     position: relative;
     --wk-height-userInfo-footer: 60px;
     --wk-height-userInfo-nav: 44px;
@@ -9,5 +8,16 @@
 }
 
 .wk-meinfo-sections {
-    
+    padding: var(--wk-space-3) var(--wk-space-2);
+    box-sizing: border-box;
+}
+
+.wk-meinfo-sections .wk-list-item {
+    border-radius: var(--wk-radius-md);
+    margin-bottom: 2px;
+}
+
+.wk-meinfo-sections .wk-section {
+    margin-top: 12px;
+    overflow: hidden;
 }

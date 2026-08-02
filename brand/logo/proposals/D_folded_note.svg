@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Shudo Logo D Folded Note">
+  <title>叙叨 · 方案 D · 折笺 Folded Note</title>
+  <defs>
+    <linearGradient id="dFill" x1="80" y1="80" x2="420" y2="420" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1F7A4D"/>
+      <stop offset="100%" stop-color="#4ADE80"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="108" fill="url(#dFill)"/>
+  <path d="M138 148 H318 L374 204 V332 C374 356 354 376 330 376 H182 C158 376 138 356 138 332 Z" fill="#fff"/>
+  <path d="M318 148 V204 H374 Z" fill="#DDF5E8"/>
+  <path d="M178 230 H300" stroke="#1F7A4D" stroke-width="16" stroke-linecap="round" opacity="0.9"/>
+  <path d="M178 270 H286" stroke="#1F7A4D" stroke-width="16" stroke-linecap="round" opacity="0.55"/>
+  <path d="M178 310 H248" stroke="#1F7A4D" stroke-width="16" stroke-linecap="round" opacity="0.35"/>
+  <path d="M168 376 L148 422 L208 376 Z" fill="#fff"/>
+</svg>

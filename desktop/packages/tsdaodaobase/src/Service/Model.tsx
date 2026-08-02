@@ -146,6 +146,10 @@ export class MessageWrap {
     public message: Message
     public checked!: boolean // 是否选中
     public locateRemind?: boolean // 定位到消息后是否需要提醒
+    /** 译文（本地态，对齐 iOS tmpObject wk_translation） */
+    public wkTranslation?: string
+    public wkTranslationHidden?: boolean
+    public wkTranslationLoading?: boolean
     constructor(message: Message) {
         this.message = message
         this.order = message.messageSeq * OrderFactor
@@ -309,7 +313,7 @@ export class MessageWrap {
         return this.nextMessage?.fromUID === this.fromUID
     }
 
-    // 解析@
+    // 解析@（有 mention 元数据时挂 uid；无元数据也按 @名 高亮，保证蓝色标注可见）
     private parseMention(): Array<Part> {
         if (this.content.contentType !== MessageContentType.text) {
             return new Array<Part>()
@@ -319,14 +323,16 @@ export class MessageWrap {
             textContent = this.message.remoteExtra.contentEdit as MessageText
         }
         let text = textContent.text || ''
-        const mention = this.content.mention
-        if (!mention?.uids || mention.uids.length <= 0) {
+        if (!text.includes("@")) {
             return [new Part(PartType.text, text)]
         }
+        const mention = this.content.mention
+        const uids = mention?.uids || []
         let parts = new Array<Part>();
         let i = 0
         while (text.length > 0) {
-            const mentionMatchResult = text.match(/@([\w\u4e00-\u9fa5])+/m)
+            // 匹配 @名（非空白）；兼容中英文昵称
+            const mentionMatchResult = text.match(/@[^\s@]+/m)
             let index = mentionMatchResult?.index
             if (index === undefined) {
                 index = -1
@@ -338,9 +344,9 @@ export class MessageWrap {
             if (index > 0) {
                 parts.push(new Part(PartType.text, text.substring(0, index)));
             }
-            let data = {}
-            if (i < mention.uids.length) {
-                data = { "uid": mention.uids[i] }
+            let data: any = {}
+            if (i < uids.length) {
+                data = { uid: uids[i] }
             }
 
             parts.push(new Part(PartType.mention, text.substr(index, mentionMatchResult[0].length), data))

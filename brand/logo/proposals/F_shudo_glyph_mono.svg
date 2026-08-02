@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none" stroke="currentColor">
+  <title>叙叨 · F 环叙 · mono</title>
+  <circle cx="210" cy="256" r="92" stroke-width="36"/>
+  <circle cx="302" cy="256" r="92" stroke-width="36" opacity="0.7"/>
+  <circle cx="256" cy="256" r="18" fill="currentColor" stroke="none"/>
+</svg>

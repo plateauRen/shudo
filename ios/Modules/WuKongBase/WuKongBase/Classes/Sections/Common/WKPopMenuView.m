@@ -10,6 +10,7 @@
 #import "WKResource.h"
 #import "WKApp.h"
 #import "UIView+WK.h"
+#import "WKLiquidGlassHelper.h"
 #ifndef SCREEN_WIDTH
 #define SCREEN_WIDTH [UIScreen mainScreen].bounds.size.width
 #endif
@@ -23,6 +24,7 @@ static CGFloat const kCellHeight = 44;
 
 @interface WKPopMenuView ()<UITableViewDelegate,UITableViewDataSource,UIGestureRecognizerDelegate>
 @property (nonatomic, strong) UITableView *tableView;
+@property (nonatomic, strong, nullable) UIVisualEffectView *menuGlassView;
 @property (nonatomic, strong) NSArray *tableData;
 @property (nonatomic, assign) CGPoint trianglePoint;
 @property (nonatomic, copy) void(^action)(NSInteger index);
@@ -57,10 +59,23 @@ static CGFloat const kCellHeight = 44;
         _tableView.dataSource = self;
         _tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
         _tableView.layer.masksToBounds = YES;
-        _tableView.layer.cornerRadius = 5;
+        _tableView.layer.cornerRadius = 12;
         _tableView.scrollEnabled = NO;
         _tableView.rowHeight = kCellHeight;
         [_tableView registerClass:[PopMenuTableViewCell class] forCellReuseIdentifier:@"PopMenuTableViewCell"];
+        if ([WKLiquidGlassHelper isLiquidGlassAvailable]) {
+            _tableView.backgroundColor = [UIColor clearColor];
+            UIView *bgHost = [[UIView alloc] initWithFrame:_tableView.bounds];
+            bgHost.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+            self.menuGlassView = [WKLiquidGlassHelper installInView:bgHost
+                                                      cornerRadius:12
+                                                       interactive:YES
+                                                        solidColor:nil];
+            self.menuGlassView.frame = bgHost.bounds;
+            _tableView.backgroundView = bgHost;
+        } else {
+            _tableView.backgroundColor = [WKApp shared].config.cellBackgroundColor;
+        }
         [self addSubview:_tableView];
         
     }
@@ -153,6 +168,10 @@ static CGFloat const kCellHeight = 44;
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
     cell.layoutMargins = UIEdgeInsetsZero;
     cell.separatorInset = UIEdgeInsetsZero;
+    if ([WKLiquidGlassHelper isLiquidGlassAvailable]) {
+        cell.backgroundColor = [UIColor clearColor];
+        cell.contentView.backgroundColor = [UIColor clearColor];
+    }
     return cell;
 }
 
@@ -200,7 +219,9 @@ static CGFloat const kCellHeight = 44;
     
     if (highlighted) {
         self.backgroundColor = [UIColor colorWithWhite:0 alpha:0.1];
-    }else {
+    }else if ([WKLiquidGlassHelper isLiquidGlassAvailable]) {
+        self.backgroundColor = [UIColor clearColor];
+    } else {
         self.backgroundColor =[WKApp shared].config.cellBackgroundColor;
     }
 }

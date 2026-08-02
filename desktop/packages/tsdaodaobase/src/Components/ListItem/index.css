@@ -1,31 +1,28 @@
-
-
 .wk-list-item {
     width: 100%;
-    padding: 1rem;
+    padding: 14px 16px;
     display: flex;
     align-items: center;
     position: relative;
     cursor: pointer;
-    background-color: white;
+    background-color: var(--wk-surface-raised);
     justify-content: space-between;
     box-sizing: border-box;
+    transition: background-color var(--wk-layer-transition);
 }
 
 body[theme-mode=dark] .wk-list-item {
-    background-color: var(--wk-color-secondary-2);
+    background-color: var(--wk-surface-raised);
 }
 
 .wk-list-item:hover {
-    background-color: #eee;
+    background-color: var(--wk-hover);
 }
-
 
 .wk-list-item-ripple {
     position: relative;
     overflow: hidden;
 }
-
 
 .wk-list-item-ripple:after {
     content: "";
@@ -36,7 +33,7 @@ body[theme-mode=dark] .wk-list-item {
     top: 0;
     left: 0;
     pointer-events: none;
-    background-image: radial-gradient(circle, #666 10%, transparent 10.01%);
+    background-image: radial-gradient(circle, var(--wk-text-tertiary) 10%, transparent 10.01%);
     background-repeat: no-repeat;
     background-position: 50%;
     transform: scale(10, 10);
@@ -46,21 +43,19 @@ body[theme-mode=dark] .wk-list-item {
 
 .wk-list-item-ripple:active:after {
     transform: scale(0, 0);
-    opacity: .7;
+    opacity: .35;
     transition: 0s;
 }
 
 .wk-list-item-title {
-    font-size: 15px;
-    font-weight: 400;
-    color: black;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--wk-text-primary);
 }
-
 
 body[theme-mode=dark] .wk-list-item-title{
-    color: white;
+    color: var(--wk-text-primary);
 }
-
 
 .wk-list-item-action {
     display: inline-flex;
@@ -73,39 +68,37 @@ body[theme-mode=dark] .wk-list-item-title{
 .wk-list-item-subtitle {
     flex: 1;
     margin-left: 20px;
-    font-size: 14px;
-    color: var(--wk-color-font-tip);
+    font-size: 13px;
+    color: var(--wk-text-tertiary);
     text-align: end;
     word-wrap: break-word;
     word-break: normal;
-   
 }
 
 .wk-list-item-subtitle-oneline {
     display: inline-block;
-    white-space: nowrap; 
-    width: 100%; 
+    white-space: nowrap;
+    width: 100%;
     overflow: hidden;
-    text-overflow:ellipsis;
-
-   
+    text-overflow: ellipsis;
 }
 
 .wk-list-item-subtitle-muliteline {
-    font-size: 14px;
-    color: #666;
-    margin-top: 10px;
-    white-space:  pre-line;
-    word-wrap:break-word;
+    font-size: 13px;
+    color: var(--wk-text-secondary);
+    margin-top: 8px;
+    white-space: pre-line;
+    word-wrap: break-word;
 }
 
 .wk-list-item-arrow {
-    margin-right: -10px;
+    margin-right: -6px;
 }
 
 .wk-list-item-arrow img{
     width: 9px;
     height: 14px;
+    opacity: 0.45;
 }
 
 .wk-list-item-tip {
@@ -113,7 +106,6 @@ body[theme-mode=dark] .wk-list-item-title{
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--wk-color-font-tip);
+    color: var(--wk-text-tertiary);
     font-size: 13px;
-
 }
