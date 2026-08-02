@@ -26,7 +26,7 @@ yarn dev
 覆盖地址：
 
 ```bash
-REACT_APP_API_URL=http://192.168.5.249:8090/v1/ yarn dev
+REACT_APP_API_URL=http://your-server-ip:8090/v1/ yarn dev
 ```
 
 ## Electron 桌面包
