@@ -83,3 +83,5 @@ docker compose down
 ```
 
 数据目录：`mysqldata/`、`miniodata/`、`wukongim/`、`tsdd/`。
+
+> 🤖 **AI 辅助开发**：本项目代码编写、调试、UI 设计大量借助 AI 编程助手 [Hermes Agent](https://nousresearch.com) 完成。
